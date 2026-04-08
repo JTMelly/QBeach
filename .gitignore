@@ -1,0 +1,26 @@
+# Ignore dev notes and history
+dev_notes_and_history/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# QGIS/Qt Generated
+ui_*.py
+resources_rc.py
+
+# OS generated files
+.DS_Store
+thumbs.db
+desktop.ini
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# QGIS Plugin Builder / Development residues
+*.bak
+user.bak

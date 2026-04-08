@@ -1,0 +1,22 @@
+[general]
+name=QBeach
+version=0.1
+description=Make XBeach models in QGIS
+about=Make XBeach models the pointy-clicky way in a familiar QGIS environment.
+tags=XBeach, wave model, bathymetry, tides, waves
+qgisMinimumVersion=3.0
+
+author=Subalpine Software
+email=jacobtristan.melly@unive.it
+tracker=https://github.com/JTMelly/QBeach/issues
+repository=https://github.com/JTMelly/QBeach
+homepage=https://github.com/JTMelly/QBeach
+# changelog=
+
+hasProcessingProvider=false
+plugin_dependencies=GDAL
+experimental=true
+category=Raster
+deprecated=false
+icon=icon.png
+server=false
