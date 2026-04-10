@@ -24,7 +24,7 @@ Input basic model boundary conditions and generate the remaining *XBeach* model 
 -   Select simulation duration, tide level, and offshore wave boundary conditions.
 -   Point *QBeach* toward the ```*.grd``` and ```*.dep``` files created previously.
 -   Choose an output path.
--   Export will save a ```params.txt``` file, a ```jonswap.txt``` file, and a ```tide.txt``` file at the above path. These are model input parameters, spectral wave conditions, and a tide table, respectively.
+-   ```Export``` will save a ```params.txt``` file, a ```jonswap.txt``` file, and a ```tide.txt``` file at the above path. These are model input parameters, spectral wave conditions, and a tide table, respectively.
 
 ![Export model](./Screenshots/ExportModel.png)
 
@@ -32,7 +32,7 @@ At this point, the following files should all exist in the same directory:
 
 ![Files list](./Screenshots/FilesList.png)
 
-It's time to head on over to a *Windows* computer to run *XBeach*. Get the [XBeach model](https://example.com) itself from *Deltares* and add all of its files to the working directory. At this point, the full file list should look like this:
+It's time to head on over to a *Windows* computer to run *XBeach*. Get the [XBeach model](https://www.deltares.nl/en/software-and-data/products/xbeach) itself from *Deltares* and add all of its files to the working directory. Now, the full file list should look like this:
 
 ![Full file list](./Screenshots/FilesList2.png)
 
