@@ -22,7 +22,7 @@ The following tutorial makes use of the sample files found in ```ExampleData/```
 Load the provided ```ExampleData/TopoBathyData.tif``` raster into a *QGIS* project. This file will not be part of the final XBeach model, but *QBeach* needs to sample the information it contains to generate an *XBeach* model bathymetry grid (```*.grd``` and ```*.dep``` files). Set the project coordinate reference system to UTM 32N (EPSG:32632). It is important to work in appropriate UTM coordinates for your study site as measurements in meters make it possible to move between "*XBeach* model space" and "real world space". Launch *QBeach* and use *BathyBuilder* following the steps summarized in the image below:
 
 -   Rotate, extend, choose grid resolution, and translate model origin coordinates. Click *Apply* to view changes. *Reset* will clear the screen, set the origin to the center of the map canvas, and return the inputs to their initial settings.
--   Select a raster data layer from the active project containing elevation data.
+-   Select a raster layer containing elevation data from the active project.
 -   Select the path to a directory where model files will be saved.
 -   Export model files. ```x.grd```, ```y.grd```, and ```bed.dep``` files will be created in the specified directory.
 -   To check what was created, provide the paths to these files and plot.
