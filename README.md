@@ -24,7 +24,7 @@ Input basic model boundary conditions and generate the remaining *XBeach* model 
 -   Select simulation duration, tide level, and offshore wave boundary conditions.
 -   Point *QBeach* toward the ```*.grd``` and ```*.dep``` files created previously.
 -   Choose an output path.
--   ```Export``` will save a ```params.txt``` file, a ```jonswap.txt``` file, and a ```tide.txt``` file at the above path. These are model input parameters, spectral wave conditions, and a tide table, respectively.
+-   *Export* will save a ```params.txt``` file, a ```jonswap.txt``` file, and a ```tide.txt``` file at the above path. These are model input parameters, spectral wave conditions, and a tide table, respectively.
 
 ![Export model](./Screenshots/ExportModel.png)
 
@@ -42,7 +42,7 @@ Run *XBeach* by launching ```xbeach.exe```. If the simulation successfully runs 
 
 Bring ```xboutput.nc``` back into QGIS to view the results.
 
--   Provide the path ```xboutput.nc```.
+-   Provide the path to ```xboutput.nc```.
 -   Choose a variable to view.
 -   Select a single timestep related to the chosen variable.
 -   Add to the map canvas as a temporary raster layer.

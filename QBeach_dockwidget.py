@@ -15,25 +15,20 @@ GNU GPL V 3
  """
 
 import os
-import tempfile
 import datetime
 import numpy as np
 from .config import DEFAULT_SETTINGS
 
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, QTimer
-from qgis.PyQt.QtGui import QColor
-from qgis.gui import QgsRubberBand, QgsFileWidget
-from qgis.core import (QgsPointXY, QgsGeometry, QgsRasterLayer, Qgis, 
-                       QgsMapLayerProxyModel, QgsWkbTypes,
-                       QgsProject, QgsSingleBandPseudoColorRenderer,
-                       QgsRasterShader, QgsColorRampShader)
+from qgis.gui import QgsFileWidget
+from qgis.core import (QgsRasterLayer, Qgis, 
+                       QgsMapLayerProxyModel, QgsProject)
 
-try:
-    from osgeo import gdal, osr
-    HAS_GDAL = True
-except ImportError:
-    HAS_GDAL = False
+from .core.grid import calculate_grid, GridVisualizer
+from .core.raster import sample_raster_at_grid, create_temp_raster, apply_viridis_renderer, HAS_GDAL
+from .core.export import export_xbeach_model, load_grid_files
+from .core.netcdf import get_netcdf_info, read_netcdf_variable
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), "QBeach_dockwidget_base.ui"))
@@ -47,15 +42,20 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         super(QBeachDockWidget, self).__init__(parent)
         self.iface = iface
         self.setupUi(self)
+
         self.fwSetwd.setStorageMode(QgsFileWidget.GetDirectory)
         self.fwSetwd2.setStorageMode(QgsFileWidget.GetDirectory)
         self.mlcbBathySource.setFilters(QgsMapLayerProxyModel.RasterLayer)
+
+        # restrict file widgets to specific file types
         self.xgrdQgsFileWidget.setFilter("*.grd")
         self.ygrdQgsFileWidget.setFilter("*.grd")
         self.beddepQgsFileWidget.setFilter("*.dep")
         self.xgrdQgsFileWidget2.setFilter("*.grd")
         self.ygrdQgsFileWidget2.setFilter("*.grd")
         self.beddepQgsFileWidget2.setFilter("*.dep")
+        self.xboutputFileWidget.setFilter("*.nc")
+
         self.pbCancelBathy.clicked.connect(self.close)
         self.pbCancelModel.clicked.connect(self.close)
         self.pbCancelRW.clicked.connect(self.close)
@@ -65,19 +65,23 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.pushButton.clicked.connect(self.exportFiles)
         self.pbDrawGrdDep.clicked.connect(self.plotGrdDep)
         self.pbExportModel.clicked.connect(self.exportModel)
-        self.roi_rubberband = None
-        self.origin_rubberband = None
-        self.grid_rubberbands = []
+        self.pbPlotVariable.clicked.connect(self.onPlotVariable)
+        self.xboutputFileWidget.fileChanged.connect(self.onNetcdfFileChanged)
+        self.cmboxVariable.currentIndexChanged.connect(self.onVariableChanged)
+        self.sliderTimeStep.valueChanged.connect(self.onSliderChanged)
+        
+        self.visualizer = GridVisualizer(iface)
+        self.var_map = {}
 
     def closeEvent(self, event):
-        self.clearVisualization()
+        self.visualizer.clear()
         self.resetGrid()
         self.sbModelDuration.setValue(0)
         self.dsbTide.setValue(0.0)
         self.dsbWaveHeight.setValue(0.0)
         self.dsbWavePeriod.setValue(0.0)
 
-        # Ensure all collapsible group boxes are collapsed
+        # collapse all collapsible group boxes and reset tab
         self.gridGroupBox.setCollapsed(True)
         self.bathyGroupBox.setCollapsed(True)
         self.depGroupBox.setCollapsed(True)
@@ -86,7 +90,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.gbOutputModel.setCollapsed(True)
         self.tabQBeach.setCurrentIndex(0)
 
-        # Clear file widgets
+        # clear file widgets
         self.fwSetwd.setFilePath("")
         self.fwSetwd2.setFilePath("")
         self.xgrdQgsFileWidget.setFilePath("")
@@ -99,17 +103,6 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.closingPlugin.emit()
         event.accept()
 
-    def clearVisualization(self):
-        if self.roi_rubberband:
-            self.iface.mapCanvas().scene().removeItem(self.roi_rubberband)
-            self.roi_rubberband = None
-        if self.origin_rubberband:
-            self.iface.mapCanvas().scene().removeItem(self.origin_rubberband)
-            self.origin_rubberband = None
-        for rb in self.grid_rubberbands:
-            self.iface.mapCanvas().scene().removeItem(rb)
-        self.grid_rubberbands = []
-
     def resetGrid(self):
         canvas = self.iface.mapCanvas()
         extentCenter = canvas.extent().center()
@@ -120,7 +113,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.dsbXresolution.setValue(DEFAULT_SETTINGS['resx'])
         self.dsbYresolution.setValue(DEFAULT_SETTINGS['resy'])
         self.dsbRotation.setValue(DEFAULT_SETTINGS['rotation'])
-        self.clearVisualization()
+        self.visualizer.clear()
 
     def resetInputParams(self):
         self.sbModelDuration.setValue(DEFAULT_SETTINGS['duration'])
@@ -157,25 +150,17 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 X = np.loadtxt(path_x)
                 Y = np.loadtxt(path_y)
                 
-                # Handle 2D grids (standard)
+                # standard 2D grid case
                 if X.ndim == 2 and Y.ndim == 2 and X.shape == Y.shape:
                     rows, cols = X.shape
                     nx = cols - 1
                     ny = rows - 1
-                    if cols > 1:
-                        dx = X[0, 1] - X[0, 0]
-                        dy = Y[0, 1] - Y[0, 0]
-                        #alfa = np.degrees(np.arctan2(dy, dx))
                     found_grid = True
                 
-                # Handle 1D profiles (ny = 0)
+                # 1D profile case (ny = 0)
                 elif X.ndim == 1 and Y.ndim == 1 and X.shape == Y.shape:
                     nx = len(X) - 1
                     ny = 0
-                    if len(X) > 1:
-                        dx = X[1] - X[0]
-                        dy = Y[1] - Y[0]
-                        #alfa = np.degrees(np.arctan2(dy, dx))
                     found_grid = True
                     
             except Exception:
@@ -198,11 +183,10 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     except Exception:
                         continue
 
-        # Wrap angles to [0, 360]
+        # limit angles to [0, 360]
         main_angle = self.dsbWaveDirection.value()
         thetamin = (main_angle - 90) % 360
         thetamax = (main_angle + 90) % 360
-        #alfa = alfa % 360
 
         return {
             'date': datetime.datetime.now().strftime("%Y-%m-%d"),
@@ -221,85 +205,13 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'nx': nx,
             'ny': ny
         }
-    
-    def calculateGrid(self):
-        
-        p = self.getGridParams()
-        theta = np.radians(p['angle'])
-        c, s = np.cos(theta), np.sin(theta)
-        rotmat = np.array([[c, -s], [s, c]])
-
-        localROI = np.array([
-            [0, 0],
-            [p['distx'], 0],
-            [p['distx'], p['disty']],
-            [0, p['disty']],
-            [0, 0]
-        ])
-
-        worldROI = (rotmat @ localROI.T).T + [p['originEasting'], p['originNorthing']]
-
-        nx = int(p['distx'] / p['dx'])
-        ny = int(p['disty'] / p['dy'])
-        x_grid_1d = np.linspace(0, p['distx'], nx + 1)
-        y_grid_1d = np.linspace(0, p['disty'], ny + 1)
-        
-        localX, localY = np.meshgrid(x_grid_1d, y_grid_1d)
-        localCoords = np.vstack([localX.ravel(), localY.ravel()])
-        worldGrid = (rotmat @ localCoords).T + [p['originEasting'], p['originNorthing']]
-        
-        E_world = worldGrid[:, 0].reshape(localX.shape)
-        N_world = worldGrid[:, 1].reshape(localX.shape)
-
-        return worldROI, E_world, N_world
 
     def drawGrid(self):
-        
-        self.clearVisualization()
-        worldROI, E_world, N_world = self.calculateGrid()
-        canvas = self.iface.mapCanvas()
-        
-        for i in range(0, E_world.shape[0], DEFAULT_SETTINGS['skip_y']):
-            rb = QgsRubberBand(canvas, QgsWkbTypes.LineGeometry)
-            rb.setColor(QColor(0, 0, 0, 80))
-            rb.setWidth(1)
-            line = [QgsPointXY(E_world[i, j], N_world[i, j]) for j in range(E_world.shape[1])]
-            rb.setToGeometry(QgsGeometry.fromPolylineXY(line), None)
-            self.grid_rubberbands.append(rb)
-        if (E_world.shape[0]-1) % DEFAULT_SETTINGS['skip_y'] != 0:
-            rb = QgsRubberBand(canvas, QgsWkbTypes.LineGeometry)
-            rb.setColor(QColor(0, 0, 0, 80))
-            rb.setWidth(1)
-            line = [QgsPointXY(E_world[-1, j], N_world[-1, j]) for j in range(E_world.shape[1])]
-            rb.setToGeometry(QgsGeometry.fromPolylineXY(line), None)
-            self.grid_rubberbands.append(rb)
-
-        for j in range(0, E_world.shape[1], DEFAULT_SETTINGS['skip_x']):
-            rb = QgsRubberBand(canvas, QgsWkbTypes.LineGeometry)
-            rb.setColor(QColor(0, 0, 0, 80))
-            rb.setWidth(1)
-            line = [QgsPointXY(E_world[i, j], N_world[i, j]) for i in range(E_world.shape[0])]
-            rb.setToGeometry(QgsGeometry.fromPolylineXY(line), None)
-            self.grid_rubberbands.append(rb)
-        if (E_world.shape[1]-1) % DEFAULT_SETTINGS['skip_x'] != 0:
-            rb = QgsRubberBand(canvas, QgsWkbTypes.LineGeometry)
-            rb.setColor(QColor(0, 0, 0, 80))
-            rb.setWidth(1)
-            line = [QgsPointXY(E_world[i, -1], N_world[i, -1]) for i in range(E_world.shape[0])]
-            rb.setToGeometry(QgsGeometry.fromPolylineXY(line), None)
-            self.grid_rubberbands.append(rb)
-
-        self.roi_rubberband = QgsRubberBand(canvas, QgsWkbTypes.PolygonGeometry)
-        self.roi_rubberband.setColor(QColor(255, 0, 0, 100))
-        self.roi_rubberband.setWidth(2)
-        points = [QgsPointXY(pt[0], pt[1]) for pt in worldROI]
-        points.append(QgsPointXY(worldROI[0][0], worldROI[0][1]))
-        self.roi_rubberband.setToGeometry(QgsGeometry.fromPolylineXY(points), None)
-        self.origin_rubberband = QgsRubberBand(canvas, QgsWkbTypes.PointGeometry)
-        self.origin_rubberband.setIcon(QgsRubberBand.ICON_CIRCLE)
-        self.origin_rubberband.setIconSize(10)
-        self.origin_rubberband.setColor(QColor(255, 255, 0))
-        self.origin_rubberband.addPoint(QgsPointXY(worldROI[0][0], worldROI[0][1]))
+        p = self.getGridParams()
+        worldROI, E_world, N_world = calculate_grid(p)
+        self.visualizer.draw(worldROI, E_world, N_world, 
+                             DEFAULT_SETTINGS['skip_x'], 
+                             DEFAULT_SETTINGS['skip_y'])
 
     def exportFiles(self):
 
@@ -309,7 +221,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if not bathy_layer or not isinstance(bathy_layer, QgsRasterLayer):
             QtWidgets.QMessageBox.warning(self, "Invalid Source", "Please select a valid elevation (depth) raster layer.")
             return
-        if not self.roi_rubberband:
+        if not self.visualizer.roi_rubberband:
             QtWidgets.QMessageBox.warning(self, "No Grid", "Please draw a grid before interpolating/exporting.")
             return
         if not output_dir or not os.path.isdir(output_dir):
@@ -318,26 +230,18 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         self.iface.messageBar().pushMessage("QBeach", "Extracting bathymetry...", level=Qgis.Info, duration=2)
 
-        # 1. Get XBeach Grid
-        worldROI, E_world, N_world = self.calculateGrid()
+        # get XB grid
+        p = self.getGridParams()
+        worldROI, E_world, N_world = calculate_grid(p)
         
-        # 2. Sample Raster at each grid node (QBeach Lite approach)
-        provider = bathy_layer.dataProvider()
-        no_data = provider.sourceNoDataValue(1)
-        rows, cols = E_world.shape
-        Z_world = np.zeros((rows, cols))
-        
-        for i in range(rows):
-            for j in range(cols):
-                val, ok = provider.sample(QgsPointXY(E_world[i, j], N_world[i, j]), 1)
-                Z_world[i, j] = val if (ok and val != no_data) else 0.0
+        # Sample raster at grid nodes
+        Z_world = sample_raster_at_grid(bathy_layer, E_world, N_world)
 
         try:
             np.savetxt(os.path.join(output_dir, "x.grd"), E_world, fmt="%.4f")
             np.savetxt(os.path.join(output_dir, "y.grd"), N_world, fmt="%.4f")
             np.savetxt(os.path.join(output_dir, "bed.dep"), Z_world, fmt="%.4f")
             
-            # 2.5s delay ensures the 2s message bar countdown has finished and cleared
             QTimer.singleShot(2500, lambda: QtWidgets.QMessageBox.information(
                 self, "Success", f".grd and .dep files saved to {output_dir}"))
         except Exception as e:
@@ -346,23 +250,19 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def plotGrdDep(self):
         
         if not HAS_GDAL:
-            QtWidgets.QMessageBox.critical(self, "GDAL Missing", "The GDAL library is required to generate the raster visualization.")
+            QtWidgets.QMessageBox.critical(self, "GDAL Missing", "The GDAL library is required to plot the temporary raster layer.")
             return
 
         path_x = self.xgrdQgsFileWidget.filePath()
         path_y = self.ygrdQgsFileWidget.filePath()
         path_z = self.beddepQgsFileWidget.filePath()
 
-        if not os.path.isfile(path_x) or not os.path.isfile(path_y) or not os.path.isfile(path_z):
+        if not all([path_x, path_y, path_z]) or not all([os.path.isfile(p) for p in [path_x, path_y, path_z]]):
             QtWidgets.QMessageBox.warning(self, "Missing Files", "Please select all three files (x.grd, y.grd, and bed.dep).")
             return
 
         try:
-            # Note: XBeach files are rows=y, cols=x but with rotation/curvilinearity possible.
-            # For a standard regular grid from this plugin:
-            E = np.loadtxt(path_x)
-            N = np.loadtxt(path_y)
-            Z = np.loadtxt(path_z)
+            E, N, Z = load_grid_files(path_x, path_y, path_z)
         except Exception as e:
             QtWidgets.QMessageBox.critical(self, "Error Loading Files", f"Failed to load grid/depth files: {str(e)}")
             return
@@ -371,163 +271,160 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             QtWidgets.QMessageBox.critical(self, "Shape Mismatch", "The selected files must have the same dimensions (rows x columns).")
             return
 
-        self.clearVisualization()
-        
-        # Determine the Geotransform for a regular (potentially rotated) grid
-        # E[i, j] and N[i, j] where i is row index, j is column index
-        # GDAL Transform: (top_left_x, res_x, rot_x, top_left_y, rot_y, res_y)
-        
-        if E.ndim == 2:
-            rows, cols = E.shape
-            try:
-                dx_col = E[0, 1] - E[0, 0] if cols > 1 else 1.0
-                dy_col = N[0, 1] - N[0, 0] if cols > 1 else 0.0
-                dx_row = E[1, 0] - E[0, 0] if rows > 1 else 0.0
-                dy_row = N[1, 0] - N[0, 0] if rows > 1 else -1.0
-                
-                # To treat E[0,0] as pixel center, shift origin to top-left corner
-                origin_x = E[0, 0] - 0.5 * dx_col - 0.5 * dx_row
-                origin_y = N[0, 0] - 0.5 * dy_col - 0.5 * dy_row
-                
-                geotransform = (origin_x, dx_col, dx_row, origin_y, dy_col, dy_row)
-            except IndexError:
-                QtWidgets.QMessageBox.critical(self, "Invalid Grid", "The grid must have at least 2x2 nodes.")
-                return
-        else:
-            # Handle 1D profiles
-            rows = 1
-            cols = len(E)
-            try:
-                dx_col = E[1] - E[0] if cols > 1 else 1.0
-                dy_col = N[1] - N[0] if cols > 1 else 0.0
-                # Fake a "row" height (1.0m) orthogonal to the profile
-                angle = np.arctan2(dy_col, dx_col) + np.pi/2
-                dx_row = np.cos(angle)
-                dy_row = np.sin(angle)
-                
-                origin_x = E[0] - 0.5 * dx_col - 0.5 * dx_row
-                origin_y = N[0] - 0.5 * dy_col - 0.5 * dy_row
-                
-                geotransform = (origin_x, dx_col, dx_row, origin_y, dy_col, dy_row)
-                # Reshape Z for GDAL band writing
-                Z = Z.reshape(1, cols)
-            except IndexError:
-                QtWidgets.QMessageBox.critical(self, "Invalid Grid", "The profile must have at least 2 nodes.")
-                return
-
-        # Create temporary file
-        fd, temp_path = tempfile.mkstemp(suffix=".tif")
-        os.close(fd)
+        self.visualizer.clear()
         
         try:
-            driver = gdal.GetDriverByName('GTiff')
-            ds = driver.Create(temp_path, cols, rows, 1, gdal.GDT_Float32)
-            ds.SetGeoTransform(geotransform)
             
-            # Use project CRS
             crs = self.iface.mapCanvas().mapSettings().destinationCrs()
-            srs = osr.SpatialReference()
-            srs.ImportFromWkt(crs.toWkt())
-            ds.SetProjection(srs.ExportToWkt())
+            temp_path = create_temp_raster(E, N, Z, crs.toWkt())
             
-            band = ds.GetRasterBand(1)
-            band.WriteArray(Z)
-            band.SetNoDataValue(-9999.0)
-            ds = None # Flush/Close
-            
-            # Load into QGIS
             rlayer = QgsRasterLayer(temp_path, "ModelBathyTemp")
             if not rlayer.isValid():
-                QtWidgets.QMessageBox.critical(self, "Load Error", "Failed to load the generated raster into QGIS.")
+                QtWidgets.QMessageBox.critical(self, "Load Error", "Failed to load the temporary raster layer.")
                 return
 
-            # Apply a basic pseudocolor renderer (e.g. viridis-like)
-            fcn = QgsColorRampShader()
-            fcn.setColorRampType(QgsColorRampShader.Interpolated)
-            
-            min_val, max_val = float(np.nanmin(Z)), float(np.nanmax(Z))
-            if min_val == max_val:
-                max_val += 1.0
-            
-            lst = [
-                QgsColorRampShader.ColorRampItem(min_val, QColor("#440154"), f"{min_val:.2f}"),
-                QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.25, QColor("#3b528b")),
-                QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.50, QColor("#21918c")),
-                QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.75, QColor("#5ec962")),
-                QgsColorRampShader.ColorRampItem(max_val, QColor("#fde725"), f"{max_val:.2f}")
-            ]
-            fcn.setColorRampItemList(lst)
-            
-            shader = QgsRasterShader()
-            shader.setRasterShaderFunction(fcn)
-            renderer = QgsSingleBandPseudoColorRenderer(rlayer.dataProvider(), 1, shader)
-            rlayer.setRenderer(renderer)
-            
+            apply_viridis_renderer(rlayer, float(np.nanmin(Z)), float(np.nanmax(Z)))
             QgsProject.instance().addMapLayer(rlayer)
             
-            nx = cols - 1
-            ny = rows - 1
-            QtWidgets.QMessageBox.information(self, "Success", f"Model grid loaded. Dimensions: nx={nx}, ny={ny} ({cols} x {rows} nodes).")
+            rows, cols = (E.shape[0], E.shape[1]) if E.ndim == 2 else (1, len(E))
+            QtWidgets.QMessageBox.information(self, "Success", f"Model grid loaded. Dimensions: nx={cols-1}, ny={rows-1}.")
             
         except Exception as e:
             QtWidgets.QMessageBox.critical(self, "Error", f"Failed to create raster: {str(e)}")
-        finally:
-            # We don't delete temp_path yet because QGIS needs it. 
-            # In a production plugin, you might use memory provider or manage temp files.
-            pass
 
     def exportModel(self):
 
-        path_x = self.xgrdQgsFileWidget2.filePath()
-        path_y = self.ygrdQgsFileWidget2.filePath()
-        path_z = self.beddepQgsFileWidget2.filePath()
         output_dir = self.fwSetwd2.filePath()
         plugin_dir = os.path.dirname(__file__)
         params_template = os.path.join(plugin_dir, 'ParamsTemplate.txt')
         p2 = self.getModelParams()
 
-        if not path_x:
-            QtWidgets.QMessageBox.warning(self, "Missing File", "Please select an x.grd file.")
+        if not all([self.xgrdQgsFileWidget2.filePath(), self.ygrdQgsFileWidget2.filePath(), self.beddepQgsFileWidget2.filePath()]):
+            QtWidgets.QMessageBox.warning(self, "Missing Files", "Please select x.grd, y.grd, and bed.dep files.")
             return
-        if not path_y:
-            QtWidgets.QMessageBox.warning(self, "Missing File", "Please select a y.grd file.")
-            return
-        if not path_z:
-            QtWidgets.QMessageBox.warning(self, "Missing File", "Please select a bed.dep file.")
-            return
-        if not output_dir:
-            QtWidgets.QMessageBox.warning(self, "Missing Directory", "Please select an output directory.")
-            return
-
-        if not os.path.isdir(output_dir):
-            QtWidgets.QMessageBox.warning(self, "Invalid Directory", "The selected output directory does not exist.")
+            
+        if not output_dir or not os.path.isdir(output_dir):
+            QtWidgets.QMessageBox.warning(self, "Invalid Directory", "Please select a valid output directory.")
             return
         
         try:
-            with open(params_template, 'r', encoding='utf-8') as pt:
-                template_content = pt.read()
-        except FileNotFoundError:
-            self.iface.messageBar().pushMessage("Missing Template", "params.txt template not found.")
-
-        try:
-            tideFilePath = os.path.join(output_dir, "tide.txt")
-            jonsFilePath = os.path.join(output_dir, "jonswap.txt")
-            paramsFilePath = os.path.join(output_dir, "params.txt")
-            
-            with open(tideFilePath, 'w') as f:
-                f.write(f"0 {p2['tide']}\n{p2['duration']+1} {p2['tide']}")
-            with open(jonsFilePath, 'w') as f2:
-                f2.write(f"{p2['Hm0']} {p2['Tp']} {p2['mainAngle']} {p2['gammajsp']} {p2['spread']} {p2['duration']+1} 1")
-            with open(paramsFilePath, 'w') as f3:
-                f3.write(template_content.format(**p2))
+            export_xbeach_model(output_dir, params_template, p2)
 
             self.iface.messageBar().pushMessage(
-                "Model Exported", 
-                f"nx={p2['nx']}, ny={p2['ny']}, alfa={p2['alfa']:.2f}°. Files saved to {output_dir}", 
+                "Working on it:", 
+                "Preparing model files.", 
                 level=Qgis.Success, 
-                duration=5
+                duration=2
             )
-            
-            QtWidgets.QMessageBox.information(self, "Success", f"Model files exported to {output_dir}")
+            QTimer.singleShot(2500, lambda: QtWidgets.QMessageBox.information(
+                self, "Success", f"Model files exported to {output_dir}"))
         except Exception as e:
-            QtWidgets.QMessageBox.critical(self, "Error", f"Failed to write one or more of the model files: {str(e)}")
+            QtWidgets.QMessageBox.critical(self, "Error", f"Failed to export model: {str(e)}")
+
+    def onNetcdfFileChanged(self, file_path):
+        if not file_path or not os.path.isfile(file_path):
+            self.cmboxVariable.clear()
+            self.var_map = {}
+            self.sliderTimeStep.setEnabled(False)
+            return
+            
+        try:
+            variables, var_map = get_netcdf_info(file_path)
+            self.var_map = var_map
+            
+            # populate variable dropdown
+            self.cmboxVariable.blockSignals(True)
+            self.cmboxVariable.clear()
+            self.cmboxVariable.addItems(variables)
+            self.cmboxVariable.blockSignals(False)
+            
+            # populate slider values
+            self.onVariableChanged()
+                
+        except Exception as e:
+            self.iface.messageBar().pushMessage(
+                "NetCDF Error", 
+                f"Failed to read NetCDF info: {str(e)}", 
+                level=Qgis.MessageLevel.Warning
+            )
+            self.cmboxVariable.clear()
+            self.var_map = {}
+            self.sliderTimeStep.setEnabled(False)
+
+    def onVariableChanged(self):
+        var_name = self.cmboxVariable.currentText()
+        if var_name in self.var_map:
+            count = self.var_map[var_name]['count']
+            
+            self.sliderTimeStep.blockSignals(True)
+            self.sliderTimeStep.setMinimum(0)
+            
+            # disable slider when working with mean values
+            if count > 1:
+                self.sliderTimeStep.setEnabled(True)
+                self.sliderTimeStep.setMaximum(count - 1)
+            else:
+                self.sliderTimeStep.setEnabled(False)
+                self.sliderTimeStep.setMaximum(0)
+                
+            self.sliderTimeStep.setSingleStep(1)
+            self.sliderTimeStep.setValue(0)
+            self.sliderTimeStep.blockSignals(False)
+            self.onSliderChanged(0)
+        else:
+            self.sliderTimeStep.setEnabled(False)
+            self.sliderTimeStep.setMaximum(0)
+            self.sliderTimeStep.setValue(0)
+            self.labTimeStep.setText("Time step: N/A")
+
+    def onSliderChanged(self, value):
+        var_name = self.cmboxVariable.currentText()
+        if var_name in self.var_map:
+            count = self.var_map[var_name]['count']
+            self.labTimeStep.setText(f"Time step: {value + 1} (of {count})") 
+        else:
+            self.labTimeStep.setText("Time step:")
+
+    def onPlotVariable(self):
+        file_path = self.xboutputFileWidget.filePath()
+        var_name = self.cmboxVariable.currentText()
+        timestep = self.sliderTimeStep.value()
+    
+        if not file_path or not os.path.isfile(file_path):
+            QtWidgets.QMessageBox.warning(self, "Missing File", "Please select a valid .nc file.")
+            return
+        if not var_name:
+            QtWidgets.QMessageBox.warning(self, "Missing Variable", "Please select a variable to plot.")
+            return
+            
+        self.iface.messageBar().pushMessage("QBeach", f"Plotting {var_name} at step {timestep}...", level=Qgis.MessageLevel.Info, duration=2)
+    
+        try:
+            E, N, Z = read_netcdf_variable(file_path, var_name, timestep)
+            
+            if E is None or N is None or Z is None:
+                QtWidgets.QMessageBox.critical(self, "Error", "Failed to read data or coordinates from NetCDF.")
+                return
+    
+            crs = self.iface.mapCanvas().mapSettings().destinationCrs()
+            temp_path = create_temp_raster(E, N, Z, crs.toWkt())
+            
+            layer_name = f"{var_name}_step{timestep}"
+            rlayer = QgsRasterLayer(temp_path, layer_name)
+            
+            if not rlayer.isValid():
+                QtWidgets.QMessageBox.critical(self, "Load Error", "Failed to load the temporary raster layer.")
+                return
+    
+            z_valid = Z[~np.isnan(Z)] # values used to apply styles to raster
+            if z_valid.size > 0:
+                z_min = float(np.nanmin(z_valid))
+                z_max = float(np.nanmax(z_valid))
+            else:
+                z_min, z_max = 0.0, 1.0
+            
+            apply_viridis_renderer(rlayer, z_min, z_max)
+            QgsProject.instance().addMapLayer(rlayer)
+            
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Error", f"Failed to plot variable: {str(e)}")

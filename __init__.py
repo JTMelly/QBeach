@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 
 QBeach plugin for QGIS: Make Xbeach models in QGIS.
@@ -14,11 +15,5 @@ GNU GPL V 3
  """
 
 def classFactory(iface):
-    """Load QBeach class from file QBeach.
-
-    :param iface: A QGIS interface instance.
-    :type iface: QgsInterface
-    """
-    #
     from .QBeach import QBeach
     return QBeach(iface)

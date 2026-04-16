@@ -24,6 +24,7 @@ from .config import DEFAULT_SETTINGS
 import os.path
 
 class QBeach:
+
     def __init__(self, iface):
 
         self.iface = iface
@@ -137,7 +138,7 @@ class QBeach:
             
         self.dockwidget.show()
         
-        # Ensure all group boxes are collapsed and tab is reset whenever plugin is shown
+        # collapse all collapsible group boxes and reset tab
         self.dockwidget.gridGroupBox.setCollapsed(True)
         self.dockwidget.bathyGroupBox.setCollapsed(True)
         self.dockwidget.depGroupBox.setCollapsed(True)
