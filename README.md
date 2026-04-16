@@ -4,6 +4,15 @@ Set up and create *XBeach* models the pointy-clicky way within a familiar *QGIS*
 ## Notes
 *QBeach* is under development and not yet available through the *QGIS* Plugins repository. Ideally, with some further debugging and documentation it should be submitted for consideration in the near future. The plugin will most likely work by cloning this repository then pointing the *QGIS* user profile plugins folder to its location. Remember, executing experimental software locally carries inherent risks. Have a look at the code and decide if it's worth trying or better to wait for a release.
 
+This project was inspired by:
+-   https://github.com/Alerovere/CoastalHydrodynamics
+-   https://github.com/openearth/xbeach-toolbox
+-   https://doi.org/10.2166/hydro.2020.092
+
+Individual Python-based tools were first gathered here before implementing in QBeach: https://github.com/JTMelly/CaorleCruscotto
+
+Gemini CLI gemini-3-flash-preview was used throughout the development of this project.
+
 ## Tutorial
 The following tutorial makes use of the sample files found in ```ExampleData/```. Approximately 10 minutes of 1 m waves were simulated on the southwest coast of the imaginary Isle of Miciocristo in the Tuscan Archipelago.
 
