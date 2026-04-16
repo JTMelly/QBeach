@@ -57,5 +57,6 @@ Bring ```xboutput.nc``` back into QGIS to view the results.
 -   Choose a variable to view.
 -   Select a single timestep related to the chosen variable.
 -   Add to the map canvas as a temporary raster layer.
+-   Known ~~bug~~ feature: initial temporary raster layer colors/styles applied will likely not be appropriate for the range of values displayed and will require fine-tuning by hand.
 
 ![Explore results](./Screenshots/PlotResults.png)
