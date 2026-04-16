@@ -24,3 +24,4 @@ desktop.ini
 # QGIS Plugin Builder / Development residues
 *.bak
 user.bak
+resources.qrc
