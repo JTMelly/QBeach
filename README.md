@@ -9,7 +9,9 @@ This project was inspired by:
 -   https://github.com/openearth/xbeach-toolbox
 -   https://doi.org/10.2166/hydro.2020.092
 
-Individual Python-based tools were first gathered here before implementing in QBeach: https://github.com/JTMelly/CaorleCruscotto
+Individual Python-based tools were first gathered here before implementing in QBeach: 
+-   https://github.com/JTMelly/CaorleCruscotto
+-   https://github.com/JTMelly/XBeach-utils
 
 Gemini CLI gemini-3-flash-preview was used throughout the development of this project.
 
