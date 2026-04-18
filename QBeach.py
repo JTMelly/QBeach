@@ -95,46 +95,17 @@ class QBeach:
             QMessageBox.critical(self.iface.mainWindow(), "Invalid CRS", "QBeach only works in UTM coordinates.")
             return
 
-        canvas = self.iface.mapCanvas() # initial values for launch/reset
-        extentCenter = canvas.extent().center()
-        easting = extentCenter.x()
-        northing = extentCenter.y()
-        initialDistx = DEFAULT_SETTINGS['distx']
-        initialDisty = DEFAULT_SETTINGS['disty']
-        initialResX = DEFAULT_SETTINGS['resx']
-        initialResY = DEFAULT_SETTINGS['resy']
-        initialRotation = DEFAULT_SETTINGS['rotation']
-        initialDuration = DEFAULT_SETTINGS['duration']
-        initialTide = DEFAULT_SETTINGS['tide']
-        initialHm0 = DEFAULT_SETTINGS['Hm0']
-        initialTp = DEFAULT_SETTINGS['Tp']
-        initialMainAng = DEFAULT_SETTINGS['mainAngle']
-        initialGammajsp = DEFAULT_SETTINGS['gammajsp']
-        initialSpread = DEFAULT_SETTINGS['spread']
-
         if not self.pluginIsActive: # activate plugin and set initial conditions
             
             self.pluginIsActive = True
             if self.dockwidget == None:
                 self.dockwidget = QBeachDockWidget(self.iface)
+            
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
             self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)
             
-            self.dockwidget.dsbEasting.setValue(easting)
-            self.dockwidget.dsbNorthing.setValue(northing)
-            self.dockwidget.dsbXdist.setValue(initialDistx)
-            self.dockwidget.dsbYdist.setValue(initialDisty)
-            self.dockwidget.dsbXresolution.setValue(initialResX)
-            self.dockwidget.dsbYresolution.setValue(initialResY)
-            self.dockwidget.dsbRotation.setValue(initialRotation)
-
-            self.dockwidget.sbModelDuration.setValue(initialDuration)
-            self.dockwidget.dsbTide.setValue(initialTide)
-            self.dockwidget.dsbWaveHeight.setValue(initialHm0)
-            self.dockwidget.dsbWavePeriod.setValue(initialTp)
-            self.dockwidget.dsbWaveDirection.setValue(initialMainAng)
-            self.dockwidget.dsbGammaJSP.setValue(initialGammajsp)
-            self.dockwidget.dsbSpreading.setValue(initialSpread)
+            self.dockwidget.resetGrid()
+            self.dockwidget.resetInputParams()
             
         self.dockwidget.show()
         
@@ -143,6 +114,7 @@ class QBeach:
         self.dockwidget.bathyGroupBox.setCollapsed(True)
         self.dockwidget.depGroupBox.setCollapsed(True)
         self.dockwidget.gbInputParameters.setCollapsed(True)
+        self.dockwidget.gbOutputVariables.setCollapsed(True)
         self.dockwidget.gbUseGrdDep.setCollapsed(True)
         self.dockwidget.gbOutputModel.setCollapsed(True)
         self.dockwidget.tabQBeach.setCurrentIndex(0)

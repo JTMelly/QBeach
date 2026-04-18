@@ -56,6 +56,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.beddepQgsFileWidget2.setFilter("*.dep")
         self.xboutputFileWidget.setFilter("*.nc")
 
+        # connect button clicks
         self.pbCancelBathy.clicked.connect(self.close)
         self.pbCancelModel.clicked.connect(self.close)
         self.pbCancelRW.clicked.connect(self.close)
@@ -70,22 +71,27 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.cmboxVariable.currentIndexChanged.connect(self.onVariableChanged)
         self.sliderTimeStep.valueChanged.connect(self.onSliderChanged)
         
+        # enable external links in the info text browsers
+        self.txtbModelMaker.setOpenExternalLinks(True)
+        self.txtbBathyBuilder.setOpenExternalLinks(True)
+        
         self.visualizer = GridVisualizer(iface)
         self.var_map = {}
+        
+        self.resetGrid()
+        self.resetInputParams()
 
     def closeEvent(self, event):
         self.visualizer.clear()
         self.resetGrid()
-        self.sbModelDuration.setValue(0)
-        self.dsbTide.setValue(0.0)
-        self.dsbWaveHeight.setValue(0.0)
-        self.dsbWavePeriod.setValue(0.0)
+        self.resetInputParams()
 
         # collapse all collapsible group boxes and reset tab
         self.gridGroupBox.setCollapsed(True)
         self.bathyGroupBox.setCollapsed(True)
         self.depGroupBox.setCollapsed(True)
         self.gbInputParameters.setCollapsed(True)
+        self.gbOutputVariables.setCollapsed(True)
         self.gbUseGrdDep.setCollapsed(True)
         self.gbOutputModel.setCollapsed(True)
         self.tabQBeach.setCurrentIndex(0)
@@ -123,6 +129,28 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.dsbWaveDirection.setValue(DEFAULT_SETTINGS['mainAngle'])
         self.dsbSpreading.setValue(DEFAULT_SETTINGS['spread'])
         self.dsbGammaJSP.setValue(DEFAULT_SETTINGS['gammajsp'])
+        
+        # Reset output variable checkboxes
+        self.cbCelerity.setChecked(False)
+        self.cbEnergy.setChecked(False)
+        self.cbWaveHeight.setChecked(False)
+        self.cbSedero.setChecked(False)
+        self.cbMeanWaveAngle.setChecked(False)
+        self.cbBedLevel.setChecked(False)
+        self.cbWaterLevel.setChecked(False)
+        
+        # Reset mean variable checkboxes
+        self.cbCelerityMean.setChecked(False)
+        self.cbEnergyMean.setChecked(False)
+        self.cbWaveHeightMean.setChecked(False)
+        self.cbSederoMean.setChecked(False)
+        self.cbMeanU.setChecked(False)
+        self.cbMeanV.setChecked(False)
+        self.cbWaterLevelMean.setChecked(False)
+        
+        # Clear output variable line edits
+        self.leOutputVariables.clear()
+        self.leOtherMeans.clear()
         
     def getGridParams(self):
         return {
@@ -188,6 +216,46 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         thetamin = (main_angle - 90) % 360
         thetamax = (main_angle + 90) % 360
 
+        # get global variables (checkboxes + line edit)
+        var_map = {
+            self.cbCelerity: "c",
+            self.cbEnergy: "E",
+            self.cbWaveHeight: "H",
+            self.cbSedero: "sedero",
+            self.cbMeanWaveAngle: "thetamean",
+            self.cbBedLevel: "zb",
+            self.cbWaterLevel: "zs"
+        }
+        
+        selected_vars = [name for cb, name in var_map.items() if cb.isChecked()]
+        
+        other_vars = self.leOutputVariables.text()
+        if other_vars:
+            extra_vars = [v.strip() for v in other_vars.split(',') if v.strip()]
+            selected_vars.extend(extra_vars)
+
+        selected_vars = sorted(list(set(selected_vars)))
+
+        # get mean variables (checkboxes + line edit)
+        mean_var_map = {
+            self.cbCelerityMean: "c",
+            self.cbEnergyMean: "E",
+            self.cbWaveHeightMean: "H",
+            self.cbSederoMean: "sedero",
+            self.cbMeanU: "u",
+            self.cbMeanV: "v",
+            self.cbWaterLevelMean: "zs"
+        }
+        
+        selected_means = [name for cb, name in mean_var_map.items() if cb.isChecked()]
+        
+        other_means = self.leOtherMeans.text()
+        if other_means:
+            extra_means = [v.strip() for v in other_means.split(',') if v.strip()]
+            selected_means.extend(extra_means)
+            
+        selected_means = sorted(list(set(selected_means)))
+
         return {
             'date': datetime.datetime.now().strftime("%Y-%m-%d"),
             'duration': self.sbModelDuration.value(),
@@ -203,7 +271,11 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'gammajsp': self.dsbGammaJSP.value(),
             'alfa': alfa,
             'nx': nx,
-            'ny': ny
+            'ny': ny,
+            'nglobalvar': len(selected_vars),
+            'global_vars': "\n".join(selected_vars),
+            'nmeanvar': len(selected_means),
+            'mean_vars': "\n".join(selected_means)
         }
 
     def drawGrid(self):
@@ -298,6 +370,10 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         plugin_dir = os.path.dirname(__file__)
         params_template = os.path.join(plugin_dir, 'ParamsTemplate.txt')
         p2 = self.getModelParams()
+
+        if (p2['nglobalvar'] + p2['nmeanvar']) == 0:
+            QtWidgets.QMessageBox.warning(self, "No Output Variables", "Please select at least one output variable (Global or Mean) before exporting.")
+            return
 
         if not all([self.xgrdQgsFileWidget2.filePath(), self.ygrdQgsFileWidget2.filePath(), self.beddepQgsFileWidget2.filePath()]):
             QtWidgets.QMessageBox.warning(self, "Missing Files", "Please select x.grd, y.grd, and bed.dep files.")

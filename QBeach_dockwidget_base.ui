@@ -26,11 +26,11 @@
    <string>QBeach</string>
   </property>
   <widget class="QWidget" name="dockWidgetContents">
-   <layout class="QGridLayout" name="gridLayout_12">
+   <layout class="QGridLayout" name="gridLayout_17">
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabQBeach">
       <property name="currentIndex">
-       <number>2</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tabBB">
        <attribute name="title">
@@ -59,13 +59,13 @@
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>125</height>
+                  <height>145</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>125</height>
+                  <height>145</height>
                  </size>
                 </property>
                 <property name="html">
@@ -73,7 +73,9 @@
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Create &lt;/span&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;XBeach&lt;/span&gt;&lt;span style=&quot; font-weight:600;&quot;&gt; grid and bathymetry.&lt;/span&gt; Remember, the origin of an &lt;span style=&quot; font-style:italic;&quot;&gt;XBeach&lt;/span&gt; model (yellow corner) should always be offshore. X increases in the onshore direction. Facing offshore, Y increases to the right. Work in UTM units or risk disaster!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Create &lt;/span&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;XBeach&lt;/span&gt;&lt;span style=&quot; font-weight:600;&quot;&gt; grid and bathymetry.&lt;/span&gt; &lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Remember, the origin of an &lt;span style=&quot; font-style:italic;&quot;&gt;XBeach&lt;/span&gt; model (yellow corner) should always be offshore. X increases in the onshore direction. Facing offshore, Y increases to the right. Work in UTM units or risk disaster! &lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a href=&quot;https://xbeach.readthedocs.io/en/latest/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;XBeach manual&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                </widget>
               </item>
@@ -83,7 +85,7 @@ p, li { white-space: pre-wrap; }
                  <string>Draw regular grid</string>
                 </property>
                 <property name="collapsed">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                 <property name="saveCollapsedState">
                  <bool>true</bool>
@@ -118,7 +120,7 @@ p, li { white-space: pre-wrap; }
                      <item>
                       <widget class="QLabel" name="labOriginN">
                        <property name="text">
-                        <string>Set origin northing.</string>
+                        <string>Set origin northing</string>
                        </property>
                       </widget>
                      </item>
@@ -164,7 +166,7 @@ p, li { white-space: pre-wrap; }
                      <item>
                       <widget class="QLabel" name="labOriginE">
                        <property name="text">
-                        <string>Set origin easting.</string>
+                        <string>Set origin easting</string>
                        </property>
                       </widget>
                      </item>
@@ -688,7 +690,7 @@ p, li { white-space: pre-wrap; }
        <attribute name="title">
         <string>ModelMaker</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout_10">
+       <layout class="QGridLayout" name="gridLayout_16">
         <item row="0" column="0">
          <widget class="QScrollArea" name="saMM">
           <property name="widgetResizable">
@@ -703,7 +705,7 @@ p, li { white-space: pre-wrap; }
              <height>880</height>
             </rect>
            </property>
-           <layout class="QGridLayout" name="gridLayout_6">
+           <layout class="QGridLayout" name="gridLayout_15">
             <item row="0" column="0">
              <layout class="QVBoxLayout" name="verticalLayout_8">
               <item>
@@ -711,13 +713,13 @@ p, li { white-space: pre-wrap; }
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>75</height>
+                  <height>110</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>75</height>
+                  <height>110</height>
                  </size>
                 </property>
                 <property name="html">
@@ -726,7 +728,7 @@ p, li { white-space: pre-wrap; }
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Create &lt;/span&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;XBeach&lt;/span&gt;&lt;span style=&quot; font-weight:600;&quot;&gt; model.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Generate simple &lt;span style=&quot; font-style:italic;&quot;&gt;jonswap.txt&lt;/span&gt;, &lt;span style=&quot; font-style:italic;&quot;&gt;params.txt&lt;/span&gt;, and &lt;span style=&quot; font-style:italic;&quot;&gt;tide.txt&lt;/span&gt; files.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Generate simple &lt;span style=&quot; font-style:italic;&quot;&gt;jonswap.txt&lt;/span&gt;, &lt;span style=&quot; font-style:italic;&quot;&gt;params.txt&lt;/span&gt;, and &lt;span style=&quot; font-style:italic;&quot;&gt;tide.txt&lt;/span&gt; files. Consult the &lt;span style=&quot; font-style:italic;&quot;&gt;XBeach&lt;/span&gt; manual online for detailed information on available &lt;a href=&quot;https://xbeach.readthedocs.io/en/latest/input_parameters.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;input parameters&lt;/span&gt;&lt;/a&gt; and &lt;a href=&quot;https://xbeach.readthedocs.io/en/latest/output_variables.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;output variables&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                </widget>
               </item>
@@ -736,7 +738,7 @@ p, li { white-space: pre-wrap; }
                  <string>Model input parameters</string>
                 </property>
                 <property name="collapsed">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                 <property name="saveCollapsedState">
                  <bool>true</bool>
@@ -1039,12 +1041,488 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
+               <widget class="QgsCollapsibleGroupBox" name="gbOutputVariables">
+                <property name="title">
+                 <string>Output variables</string>
+                </property>
+                <property name="collapsed">
+                 <bool>true</bool>
+                </property>
+                <layout class="QGridLayout" name="gridLayout_12">
+                 <item row="0" column="0">
+                  <widget class="QGroupBox" name="gbTimestepVariables">
+                   <property name="title">
+                    <string>Timestep variables</string>
+                   </property>
+                   <layout class="QGridLayout" name="gridLayout_10">
+                    <item row="0" column="0">
+                     <layout class="QVBoxLayout" name="verticalLayout_11">
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_34">
+                        <item>
+                         <widget class="QLabel" name="labTypicalVariables">
+                          <property name="text">
+                           <string>Select typical output variables:</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_32">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_35">
+                        <item>
+                         <widget class="QCheckBox" name="cbCelerity">
+                          <property name="text">
+                           <string>C - Wave celerity</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_33">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_36">
+                        <item>
+                         <widget class="QCheckBox" name="cbEnergy">
+                          <property name="text">
+                           <string>E - Wave energy</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_34">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_37">
+                        <item>
+                         <widget class="QCheckBox" name="cbWaveHeight">
+                          <property name="text">
+                           <string>H - RMS wave height</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_35">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_38">
+                        <item>
+                         <widget class="QCheckBox" name="cbSedero">
+                          <property name="text">
+                           <string>sedero - Sedimentation/erosion</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_36">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_39">
+                        <item>
+                         <widget class="QCheckBox" name="cbMeanWaveAngle">
+                          <property name="text">
+                           <string>thetamean - Mean wave angle</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_37">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_40">
+                        <item>
+                         <widget class="QCheckBox" name="cbBedLevel">
+                          <property name="text">
+                           <string>zb - Bed level</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_38">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_41">
+                        <item>
+                         <widget class="QCheckBox" name="cbWaterLevel">
+                          <property name="text">
+                           <string>zs - Water level</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_39">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_42">
+                        <item>
+                         <widget class="QLabel" name="labOtherVariables">
+                          <property name="text">
+                           <string>Add other variables separated by commas:</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_40">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <widget class="QLineEdit" name="leOutputVariables"/>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QGroupBox" name="gbTimestepVariables_2">
+                   <property name="title">
+                    <string>Time-averaged variables</string>
+                   </property>
+                   <layout class="QGridLayout" name="gridLayout_6">
+                    <item row="0" column="0">
+                     <layout class="QVBoxLayout" name="verticalLayout_12">
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_43">
+                        <item>
+                         <widget class="QLabel" name="labTypicalMeanVariables">
+                          <property name="text">
+                           <string>Select typical mean variables:</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_41">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_44">
+                        <item>
+                         <widget class="QCheckBox" name="cbCelerityMean">
+                          <property name="text">
+                           <string>C - Mean wave celerity</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_42">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_45">
+                        <item>
+                         <widget class="QCheckBox" name="cbEnergyMean">
+                          <property name="text">
+                           <string>E - Mean wave energy</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_44">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_46">
+                        <item>
+                         <widget class="QCheckBox" name="cbWaveHeightMean">
+                          <property name="text">
+                           <string>H - Mean RMS wave height</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_45">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_47">
+                        <item>
+                         <widget class="QCheckBox" name="cbSederoMean">
+                          <property name="text">
+                           <string>sedero - Mean sed./erosion rate</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_46">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_48">
+                        <item>
+                         <widget class="QCheckBox" name="cbMeanU">
+                          <property name="text">
+                           <string>u - depth-avg. mean current (u direction)</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_47">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_49">
+                        <item>
+                         <widget class="QCheckBox" name="cbMeanV">
+                          <property name="text">
+                           <string>v - depth-avg. mean current (v direction)</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_48">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_50">
+                        <item>
+                         <widget class="QCheckBox" name="cbWaterLevelMean">
+                          <property name="text">
+                           <string>zs - Mean water level (wave setup)</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_49">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_51">
+                        <item>
+                         <widget class="QLabel" name="labOtherMeanVariables">
+                          <property name="text">
+                           <string>Add other means separated by commas:</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_50">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <widget class="QLineEdit" name="leOtherMeans"/>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
                <widget class="QgsCollapsibleGroupBox" name="gbUseGrdDep">
                 <property name="title">
                  <string>Use .grd and .dep files</string>
                 </property>
                 <property name="collapsed">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                 <layout class="QGridLayout" name="gridLayout_9">
                  <item row="0" column="0">
@@ -1162,7 +1640,7 @@ p, li { white-space: pre-wrap; }
                  <string>Generate model files</string>
                 </property>
                 <property name="collapsed">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                 <layout class="QGridLayout" name="gridLayout_8">
                  <item row="0" column="0">
@@ -1275,17 +1753,17 @@ p, li { white-space: pre-wrap; }
              <layout class="QVBoxLayout" name="verticalLayout_10">
               <item>
                <widget class="QTextBrowser" name="txtbResultsWrangler">
-                <property name="verticalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="horizontalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
                   <height>75</height>
                  </size>
+                </property>
+                <property name="verticalScrollBarPolicy">
+                 <enum>Qt::ScrollBarAlwaysOff</enum>
+                </property>
+                <property name="horizontalScrollBarPolicy">
+                 <enum>Qt::ScrollBarAlwaysOff</enum>
                 </property>
                 <property name="html">
                  <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
