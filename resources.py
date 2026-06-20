@@ -6,7 +6,9 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt5 import QtCore
+#from PyQt5 import QtCore
+
+from qgis.PyQt import QtCore
 
 qt_resource_data = b"\
 \x00\x00\x04\xfa\

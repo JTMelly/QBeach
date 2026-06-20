@@ -23,6 +23,11 @@ from .resources import *
 from .config import DEFAULT_SETTINGS
 import os.path
 
+try:
+    RIGHT_DOCK_WIDGET_AREA = Qt.DockWidgetArea.RightDockWidgetArea  # Qt6
+except AttributeError:
+    RIGHT_DOCK_WIDGET_AREA = Qt.RightDockWidgetArea  # Qt5
+
 class QBeach:
 
     def __init__(self, iface):
@@ -58,7 +63,7 @@ class QBeach:
         if whats_this is not None:
             action.setWhatsThis(whats_this)
         if add_to_toolbar:
-            self.toolbar.addAction(action)
+            self.iface.addToolBarIcon(action)
         if add_to_menu:
             self.iface.addPluginToMenu(
                 self.menu,
@@ -102,7 +107,7 @@ class QBeach:
                 self.dockwidget = QBeachDockWidget(self.iface)
             
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
-            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)
+            self.iface.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dockwidget)
             
             self.dockwidget.resetGrid()
             self.dockwidget.resetInputParams()

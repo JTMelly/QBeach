@@ -5,6 +5,7 @@ description=Make XBeach models in QGIS
 about=Make XBeach models the pointy-clicky way in a familiar QGIS environment.
 tags=XBeach, wave model, bathymetry, tides, waves
 qgisMinimumVersion=3.0
+qgisMaximumVersion=4.99
 
 author=Subalpine Software
 email=jacobtristan.melly@unive.it
