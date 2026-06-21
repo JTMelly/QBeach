@@ -9,6 +9,7 @@ __pycache__/
 # QGIS/Qt Generated
 ui_*.py
 resources_rc.py
+.ExampleData/*.tif.aux.xml
 
 # OS generated files
 .DS_Store
