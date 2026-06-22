@@ -29,6 +29,7 @@ from .core.grid import calculate_grid, GridVisualizer
 from .core.raster import sample_raster_at_grid, sample_vector_at_grid, create_temp_raster, apply_viridis_renderer, HAS_GDAL
 from .core.export import export_xbeach_model, load_grid_files
 from .core.netcdf import get_netcdf_info, read_netcdf_variable
+from .core.compat import QGIS_INFO, QGIS_SUCCESS
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), "QBeach_dockwidget_base.ui"))
@@ -210,7 +211,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             QtWidgets.QMessageBox.warning(self, "Invalid Path", "Please select a valid output directory.")
             return
 
-        self.iface.messageBar().pushMessage("QBeach", "Extracting bathymetry...", level=Qgis.Info, duration=2)
+        self.iface.messageBar().pushMessage("QBeach", "Extracting bathymetry...", level=QGIS_INFO, duration=2)
 
         # get XB grid
         p = self.getGridParams()
@@ -249,7 +250,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             QtWidgets.QMessageBox.critical(self, "Error Loading Files", f"Failed to load template grid/depth files: {str(e)}")
             return
 
-        self.iface.messageBar().pushMessage("QBeach", "Generating optional files...", level=Qgis.Info, duration=2)
+        self.iface.messageBar().pushMessage("QBeach", "Generating optional files...", level=QGIS_INFO, duration=2)
 
         # Manning
         if self.cbManningLayer.isChecked():
@@ -516,7 +517,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.iface.messageBar().pushMessage(
                 "Working on it:", 
                 "Preparing model files.", 
-                level=Qgis.Success, 
+                level=QGIS_SUCCESS, 
                 duration=2
             )
             QTimer.singleShot(2500, lambda: QtWidgets.QMessageBox.information(
