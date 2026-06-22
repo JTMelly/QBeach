@@ -19,7 +19,6 @@ from qgis.PyQt.QtWidgets import QAction, QMessageBox
 from qgis.PyQt.QtGui import QIcon
 from qgis.core import QgsProject
 from .QBeach_dockwidget import QBeachDockWidget
-from .resources import *
 from .config import DEFAULT_SETTINGS
 import os.path
 
@@ -73,7 +72,7 @@ class QBeach:
 
     def initGui(self):
 
-        icon_path = ':/plugins/QBeach/icon.png'
+        icon_path = os.path.join(self.plugin_dir, 'icon.png')
         self.add_action(
             icon_path,
             text=u'QBeach',
