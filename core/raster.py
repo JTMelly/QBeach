@@ -15,6 +15,19 @@ except ImportError:
     HAS_GDAL = False
 
 def sample_raster_at_grid(raster_layer, E_world, N_world):
+    """Extract raster values at each grid node location.
+
+    Samples the raster layer's data provider at each (Easting, Northing)
+    coordinate. NoData cells and out-of-bounds samples are replaced with 0.0.
+
+    Args:
+        raster_layer (QgsRasterLayer): The raster layer to sample from.
+        E_world (ndarray): 2D array of Easting coordinates.
+        N_world (ndarray): 2D array of Northing coordinates.
+
+    Returns:
+        ndarray: 2D array of sampled values, same shape as E_world.
+    """
 
     provider = raster_layer.dataProvider()
     no_data = provider.sourceNoDataValue(1)
@@ -29,9 +42,23 @@ def sample_raster_at_grid(raster_layer, E_world, N_world):
     return Z_world
 
 def sample_vector_at_grid(vector_layer, attribute_name, default_value, E_world, N_world, destination_crs=None):
-    """
-    Samples a vector layer at grid nodes.
-    Checks if points fall within polygons and assigns attribute values.
+    """Sample a vector polygon layer at each grid node location.
+
+    For each grid point, performs a spatial intersection test against
+    cached polygon geometries using a QgsSpatialIndex. Points falling
+    inside a polygon receive that feature's attribute value.
+
+    Args:
+        vector_layer (QgsVectorLayer): Polygon vector layer to sample.
+        attribute_name (str): Field name containing the value to assign.
+        default_value (float): Fallback value for points outside all polygons.
+        E_world (ndarray): 2D array of Easting coordinates.
+        N_world (ndarray): 2D array of Northing coordinates.
+        destination_crs (QgsCoordinateReferenceSystem, optional): CRS to
+            reproject the vector layer into. Defaults to the project CRS.
+
+    Returns:
+        ndarray: 2D float32 array of sampled values, same shape as E_world.
     """
     rows, cols = E_world.shape
     result = np.full((rows, cols), default_value, dtype=np.float32)
@@ -76,6 +103,24 @@ def sample_vector_at_grid(vector_layer, attribute_name, default_value, E_world, 
     return result
 
 def create_temp_raster(E, N, Z, crs_wkt):
+    """Write a temporary GeoTIFF from grid coordinates and depth values.
+
+    Handles both 2D (meshgrid) and 1D (profile) input arrays. The
+    affine geotransform is derived from the coordinate deltas, supporting
+    rotated grids.
+
+    Args:
+        E (ndarray): 1D or 2D array of Easting coordinates.
+        N (ndarray): 1D or 2D array of Northing coordinates.
+        Z (ndarray): 1D or 2D array of depth/elevation values.
+        crs_wkt (str): WKT representation of the output CRS.
+
+    Returns:
+        str: Path to the temporary GeoTIFF file.
+
+    Raises:
+        ImportError: If GDAL is not available.
+    """
 
     if not HAS_GDAL:
         raise ImportError("GDAL is required for this operation.")
@@ -123,6 +168,16 @@ def create_temp_raster(E, N, Z, crs_wkt):
     return temp_path
 
 def apply_viridis_renderer(layer, min_val, max_val):
+    """Apply a Viridis-style pseudo-colour renderer to a raster layer.
+
+    Creates a five-stop interpolated colour ramp spanning purple, blue,
+    teal, green, and yellow.
+
+    Args:
+        layer (QgsRasterLayer): The target raster layer.
+        min_val (float): Data value mapped to the bottom of the ramp.
+        max_val (float): Data value mapped to the top of the ramp.
+    """
 
     fcn = QgsColorRampShader()
     fcn.setColorRampType(QgsColorRampShader.Interpolated)

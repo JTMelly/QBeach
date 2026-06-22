@@ -8,6 +8,21 @@ except ImportError:
     HAS_GDAL = False
 
 def get_netcdf_info(file_path):
+    """Read the variable list and metadata from an XBeach NetCDF file.
+
+    Opens the file via GDAL's subdataset API, enumerates all non-coordinate
+    variables, and records the number of raster bands (timesteps) per variable.
+
+    Args:
+        file_path (str): Path to the NetCDF file (xboutput.nc).
+
+    Returns:
+        tuple: (variables, var_map)
+            - variables (list of str): Sorted variable names.
+            - var_map (dict): Mapping of variable name to dict with keys
+              'count' (int, number of timesteps) and 'uri' (str, GDAL
+              subdataset URI).
+    """
 
     if not file_path or not HAS_GDAL:
         return [], {}
@@ -45,6 +60,26 @@ def get_netcdf_info(file_path):
     return sorted(variables), var_map
 
 def read_netcdf_variable(file_path, var_name, timestep):
+    """Read a single variable at a specific timestep from an XBeach NetCDF.
+
+    Extracts the data array and coordinate grids for the requested
+    variable and timestep index. Falls back to array-index coordinates
+    if coordinate variables are not found.
+
+    Args:
+        file_path (str): Path to the NetCDF file (xboutput.nc).
+        var_name (str): Name of the variable to read.
+        timestep (int): Zero-based timestep index.
+
+    Returns:
+        tuple: (E, N, Z)
+            - E (ndarray): 2D array of Easting coordinates.
+            - N (ndarray): 2D array of Northing coordinates.
+            - Z (ndarray): 2D array of variable values.
+
+    Raises:
+        ImportError: If GDAL is not available.
+    """
 
     if not HAS_GDAL:
         raise ImportError("GDAL is required to read NetCDF variables.")
