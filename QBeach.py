@@ -51,6 +51,22 @@ class QBeach:
             status_tip=None,
             whats_this=None,
             parent=None):
+        """Create and register a QGIS toolbar button and/or menu entry.
+
+        Args:
+            icon_path (str): Path to the icon file on disk.
+            text (str): Display text for the action.
+            callback (callable): Function to invoke when the action is triggered.
+            enabled_flag (bool): Whether the action starts enabled.
+            add_to_menu (bool): Whether to add to the QBeach plugin menu.
+            add_to_toolbar (bool): Whether to add to the QBeach toolbar.
+            status_tip (str, optional): Status bar tip text.
+            whats_this (str, optional): What's This help text.
+            parent (QWidget, optional): Parent widget for the action.
+
+        Returns:
+            QAction: The newly created action.
+        """
 
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
@@ -71,6 +87,7 @@ class QBeach:
         return action
 
     def initGui(self):
+        """Set up the plugin toolbar button and menu entry."""
 
         icon_path = os.path.join(self.plugin_dir, 'icon.png')
         self.add_action(
@@ -84,6 +101,7 @@ class QBeach:
         self.pluginIsActive = False
 
     def unload(self):
+        """Remove the plugin toolbar button and menu entry."""
         for action in self.actions:
             self.iface.removePluginMenu(
                 u'&QBeach',
@@ -92,7 +110,13 @@ class QBeach:
         del self.toolbar
 
     def run(self):
-        
+        """Launch the QBeach dock widget.
+
+        Validates the project CRS is UTM, initialises the dock widget
+        on first launch, resets grid and parameter states, collapses
+        all group boxes, and displays the widget.
+        """
+
         canvas = self.iface.mapCanvas() # require UTM coordinates
         project_crs = QgsProject.instance().crs()
         if "UTM" not in project_crs.description().upper():
