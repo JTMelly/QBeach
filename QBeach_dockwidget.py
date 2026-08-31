@@ -154,6 +154,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.xgrdQgsFileWidget2.setFilePath("")
         self.ygrdQgsFileWidget2.setFilePath("")
         self.beddepQgsFileWidget2.setFilePath("")
+        self.xboutputFileWidget.setFilePath("")
         
         # clear optional file widgets
         self.qgsfwXgridBB.setFilePath("")
@@ -333,9 +334,12 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         layer_active = self.cbManningLayer.isChecked()
         use_default_only = self.cbManningDefaultOnly.isChecked()
         self.cbManningDefaultOnly.setEnabled(layer_active)
-        self.mlcbManningSource.setEnabled(layer_active and not use_default_only)
-        self.cbManningHeading.setEnabled(layer_active and not use_default_only)
         self.dsbDefaultManning.setEnabled(layer_active)
+        self.labDefaultManning.setEnabled(layer_active)
+        self.mlcbManningSource.setEnabled(layer_active and not use_default_only)
+        self.lbManningVectorSource.setEnabled(layer_active and not use_default_only)
+        self.cbManningHeading.setEnabled(layer_active and not use_default_only)
+        self.lbManningUseField.setEnabled(layer_active and not use_default_only)
 
     def onManningDefaultOnlyToggled(self, checked):
         self._updateManningWidgetState()
@@ -348,9 +352,13 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         layer_active = self.cbNonErodibleLayer.isChecked()
         use_default_only = self.cbNeDefaultOnly.isChecked()
         self.cbNeDefaultOnly.setEnabled(layer_active)
-        self.mlcbNonErodibleSource.setEnabled(layer_active and not use_default_only)
-        self.cbNonErodibleHeading.setEnabled(layer_active and not use_default_only)
         self.dsbDefaultNE.setEnabled(layer_active)
+        self.labDefaultErodible.setEnabled(layer_active)
+        self.mlcbNonErodibleSource.setEnabled(layer_active and not use_default_only)
+        self.lbNonErodibleVector.setEnabled(layer_active and not use_default_only)
+        self.cbNonErodibleHeading.setEnabled(layer_active and not use_default_only)
+        self.lbNonErodibleUseField.setEnabled(layer_active and not use_default_only)
+        
 
     def onNeDefaultOnlyToggled(self, checked):
         self._updateNonErodibleWidgetState()
