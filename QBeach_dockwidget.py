@@ -19,7 +19,7 @@ import datetime
 import numpy as np
 from .config import DEFAULT_SETTINGS
 
-from qgis.PyQt import QtWidgets, uic
+from qgis.PyQt import QtWidgets
 from qgis.PyQt.QtCore import pyqtSignal, QTimer
 from qgis.gui import QgsFileWidget
 from qgis.core import (QgsRasterLayer, Qgis, 
@@ -29,9 +29,9 @@ from .core.grid import calculate_grid, GridVisualizer
 from .core.raster import sample_raster_at_grid, sample_vector_at_grid, create_temp_raster, apply_viridis_renderer, HAS_GDAL
 from .core.export import export_xbeach_model, load_grid_files
 from .core.netcdf import get_netcdf_info, read_netcdf_variable
-from .core.compat import QGIS_INFO, QGIS_SUCCESS
+from .core.compat import QGIS_INFO, QGIS_SUCCESS, load_ui_type
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(
+FORM_CLASS, _ = load_ui_type(os.path.join(
     os.path.dirname(__file__), "QBeach_dockwidget_base.ui"))
 
 class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
@@ -90,7 +90,9 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.mlcbNonErodibleSource.layerChanged.connect(self.onNonErodibleLayerChanged)
         self.mlcbSedimentSource.layerChanged.connect(self.onSedimentLayerChanged)
         self.cbManningLayer.toggled.connect(self.onManningLayerToggled)
+        self.cbManningDefaultOnly.toggled.connect(self.onManningDefaultOnlyToggled)
         self.cbNonErodibleLayer.toggled.connect(self.onNonErodibleLayerToggled)
+        self.cbNeDefaultOnly.toggled.connect(self.onNeDefaultOnlyToggled)
         self.cbSedimentLayer.toggled.connect(self.onSedimentLayerToggled)
 
         # initialize optional layer enabled states
@@ -126,7 +128,9 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.tabQBeach.setCurrentIndex(0)
 
         # uncheck optional checkboxes
+        self.cbManningDefaultOnly.setChecked(False)
         self.cbManningLayer.setChecked(False)
+        self.cbNeDefaultOnly.setChecked(False)
         self.cbNonErodibleLayer.setChecked(False)
         self.cbSedimentLayer.setChecked(False)
 
@@ -254,37 +258,47 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # Manning
         if self.cbManningLayer.isChecked():
-            layer = self.mlcbManningSource.currentLayer()
-            attribute = self.cbManningHeading.currentText()
             default_val = self.dsbDefaultManning.value()
 
-            if not layer or not attribute:
-                QtWidgets.QMessageBox.warning(self, "Manning Layer Error", "Please select a valid Manning layer and attribute field.")
-                return
+            if self.cbManningDefaultOnly.isChecked():
+                manning_grid = np.full_like(Z, default_val, dtype=float)
+            else:
+                layer = self.mlcbManningSource.currentLayer()
+                attribute = self.cbManningHeading.currentText()
 
-            try:
-                manning_grid = sample_vector_at_grid(layer, attribute, default_val, E, N)
-                np.savetxt(os.path.join(output_dir, "manning.dep"), manning_grid, fmt="%.4f")
-            except Exception as e:
-                QtWidgets.QMessageBox.critical(self, "Manning Error", f"Failed to generate manning.dep: {str(e)}")
-                return
+                if not layer or not attribute:
+                    QtWidgets.QMessageBox.warning(self, "Manning Layer Error", "Please select a valid Manning layer and attribute field.")
+                    return
+
+                try:
+                    manning_grid = sample_vector_at_grid(layer, attribute, default_val, E, N)
+                except Exception as e:
+                    QtWidgets.QMessageBox.critical(self, "Manning Error", f"Failed to generate manning.dep: {str(e)}")
+                    return
+
+            np.savetxt(os.path.join(output_dir, "manning.dep"), manning_grid, fmt="%.4f")
 
         # Non-Erodible
         if self.cbNonErodibleLayer.isChecked():
-            layer = self.mlcbNonErodibleSource.currentLayer()
-            attribute = self.cbNonErodibleHeading.currentText()
             default_val = self.dsbDefaultNE.value()
 
-            if not layer or not attribute:
-                QtWidgets.QMessageBox.warning(self, "Non-Erodible Error", "Please select a valid non-erodible layer and attribute field.")
-                return
+            if self.cbNeDefaultOnly.isChecked():
+                ne_grid = np.full_like(Z, default_val, dtype=float)
+            else:
+                layer = self.mlcbNonErodibleSource.currentLayer()
+                attribute = self.cbNonErodibleHeading.currentText()
 
-            try:
-                ne_grid = sample_vector_at_grid(layer, attribute, default_val, E, N)
-                np.savetxt(os.path.join(output_dir, "nonerodible.dep"), ne_grid, fmt="%.4f")
-            except Exception as e:
-                QtWidgets.QMessageBox.critical(self, "Non-Erodible Error", f"Failed to generate nonerodible.dep: {str(e)}")
-                return
+                if not layer or not attribute:
+                    QtWidgets.QMessageBox.warning(self, "Non-Erodible Error", "Please select a valid non-erodible layer and attribute field.")
+                    return
+
+                try:
+                    ne_grid = sample_vector_at_grid(layer, attribute, default_val, E, N)
+                except Exception as e:
+                    QtWidgets.QMessageBox.critical(self, "Non-Erodible Error", f"Failed to generate nonerodible.dep: {str(e)}")
+                    return
+
+            np.savetxt(os.path.join(output_dir, "nonerodible.dep"), ne_grid, fmt="%.4f")
 
             # (Future: handle Sediment)
 
@@ -312,16 +326,34 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.cbSedimentHeading.addItems(fields)
 
     def onManningLayerToggled(self, checked):
-        self.mlcbManningSource.setEnabled(checked)
-        self.cbManningHeading.setEnabled(checked)
-        self.dsbDefaultManning.setEnabled(checked)
+        self._updateManningWidgetState()
         self.updateOptionalExportState()
 
+    def _updateManningWidgetState(self):
+        layer_active = self.cbManningLayer.isChecked()
+        use_default_only = self.cbManningDefaultOnly.isChecked()
+        self.cbManningDefaultOnly.setEnabled(layer_active)
+        self.mlcbManningSource.setEnabled(layer_active and not use_default_only)
+        self.cbManningHeading.setEnabled(layer_active and not use_default_only)
+        self.dsbDefaultManning.setEnabled(layer_active)
+
+    def onManningDefaultOnlyToggled(self, checked):
+        self._updateManningWidgetState()
+
     def onNonErodibleLayerToggled(self, checked):
-        self.mlcbNonErodibleSource.setEnabled(checked)
-        self.cbNonErodibleHeading.setEnabled(checked)
-        self.dsbDefaultNE.setEnabled(checked)
+        self._updateNonErodibleWidgetState()
         self.updateOptionalExportState()
+
+    def _updateNonErodibleWidgetState(self):
+        layer_active = self.cbNonErodibleLayer.isChecked()
+        use_default_only = self.cbNeDefaultOnly.isChecked()
+        self.cbNeDefaultOnly.setEnabled(layer_active)
+        self.mlcbNonErodibleSource.setEnabled(layer_active and not use_default_only)
+        self.cbNonErodibleHeading.setEnabled(layer_active and not use_default_only)
+        self.dsbDefaultNE.setEnabled(layer_active)
+
+    def onNeDefaultOnlyToggled(self, checked):
+        self._updateNonErodibleWidgetState()
 
     def onSedimentLayerToggled(self, checked):
         self.mlcbSedimentSource.setEnabled(checked)
