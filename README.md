@@ -49,7 +49,7 @@ At this point, the following files should all exist in the same directory:
 
 ![Files list](./Screenshots/FilesList.png)
 
-It's time to head on over to a *Windows* computer to run *XBeach*. Get the [XBeach model](https://www.deltares.nl/en/software-and-data/products/xbeach) itself from *Deltares* and add all of its files to the working directory. Now, the full file list should look like this:
+It's time to head on over to a *Windows* computer to run *XBeach*. This is probably the quickest way to get a model running with precompiled binaries, though it's also possible to compile *XBeach* from source to run on *Linux* machines. Get the [XBeach model](https://www.deltares.nl/en/software-and-data/products/xbeach) itself from *Deltares* and add all of its files to the working directory. Now, the full file list should look like this:
 
 ![Full file list](./Screenshots/FilesList2.png)
 
