@@ -168,6 +168,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.xgrdQgsFileWidget2.setFilePath("")
         self.ygrdQgsFileWidget2.setFilePath("")
         self.beddepQgsFileWidget2.setFilePath("")
+        self.xboutputFileWidget.setFilePath("")
         
         # clear optional file widgets
         self.qgsfwXgridBB.setFilePath("")
