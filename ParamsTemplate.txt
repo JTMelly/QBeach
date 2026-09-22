@@ -37,9 +37,12 @@ front        = abs_2d
 back         = abs_2d
 
 
+# Bed friction #######################
+{bedfriction}
+
+
 # Sedimentation/erosion #############
-morphology   = 0
-sedtrans     = 0
+{sedimentation}
 
 
 # Tide ##############################

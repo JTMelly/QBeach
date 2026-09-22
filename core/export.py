@@ -15,7 +15,8 @@ def export_xbeach_model(output_dir, template_path, p2):
         p2 (dict): Model parameters dictionary with keys matching the
             template placeholders (date, duration, tstop, tintg, tide,
             Hm0, Tp, mainAngle, thetamin, thetamax, spread, gammajsp,
-            alfa, nx, ny, nglobalvar, global_vars, nmeanvar, mean_vars).
+            alfa, nx, ny, nglobalvar, global_vars, nmeanvar, mean_vars,
+            bedfriction, sedimentation).
     """
 
     with open(template_path, 'r', encoding='utf-8') as pt:

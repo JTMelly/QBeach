@@ -545,6 +545,23 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             
         selected_means = sorted(list(set(selected_means)))
 
+        # optional bed friction from manning .dep file
+        bedfriction = ""
+        if self.cbUseManning.isChecked():
+            manning_path = self.qfwOptionalManning.filePath()
+            if manning_path and manning_path.lower().endswith('.dep'):
+                bedfriction = (f"bedfriction = manning\n"
+                               f"bedfricfile = {os.path.basename(manning_path)}")
+
+        # optional non-erodible .dep file handling
+        sedimentation = "morphology   = 0\nsedtrans     = 0"
+        if self.cbUseNonErodible.isChecked():
+            ne_path = self.qfwOptionalNonErodible.filePath()
+            if ne_path and ne_path.lower().endswith('.dep'):
+                sedimentation = (f"morfac = 1\n"
+                                 f"struct = 1\n"
+                                 f"ne_layer = {os.path.basename(ne_path)}")
+
         return {
             'date': datetime.datetime.now().strftime("%Y-%m-%d"),
             'duration': self.sbModelDuration.value(),
@@ -564,7 +581,9 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'nglobalvar': len(selected_vars),
             'global_vars': "\n".join(selected_vars),
             'nmeanvar': len(selected_means),
-            'mean_vars': "\n".join(selected_means)
+            'mean_vars': "\n".join(selected_means),
+            'bedfriction': bedfriction,
+            'sedimentation': sedimentation
         }
 
     def exportModel(self):
@@ -585,7 +604,23 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if not output_dir or not os.path.isdir(output_dir):
             QtWidgets.QMessageBox.warning(self, "Invalid Directory", "Please select a valid output directory.")
             return
-        
+
+        missing_optional = []
+        if self.cbUseManning.isChecked():
+            manning_sel = self.qfwOptionalManning.filePath()
+            if not manning_sel or not manning_sel.lower().endswith('.dep'):
+                missing_optional.append("Manning")
+        if self.cbUseNonErodible.isChecked():
+            ne_sel = self.qfwOptionalNonErodible.filePath()
+            if not ne_sel or not ne_sel.lower().endswith('.dep'):
+                missing_optional.append("Non-erodible")
+        if missing_optional:
+            QtWidgets.QMessageBox.warning(
+                self, "Missing Optional Files",
+                "The following optional .dep files are enabled but not selected:\n"
+                + "\n".join(f"- {name}" for name in missing_optional))
+            return
+
         try:
             export_xbeach_model(output_dir, params_template, p2)
 
