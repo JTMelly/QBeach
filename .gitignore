@@ -10,6 +10,8 @@ __pycache__/
 ui_*.py
 resources_rc.py
 .ExampleData/*.tif.aux.xml
+symbology-style.db
+user-history.db
 
 # OS generated files
 .DS_Store
