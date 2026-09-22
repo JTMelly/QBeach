@@ -30,7 +30,7 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabQBeach">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tabBB">
        <attribute name="title">
@@ -46,9 +46,9 @@
            <property name="geometry">
             <rect>
              <x>0</x>
-             <y>-416</y>
-             <width>344</width>
-             <height>1300</height>
+             <y>0</y>
+             <width>358</width>
+             <height>882</height>
             </rect>
            </property>
            <layout class="QGridLayout" name="gridLayout_5">
@@ -75,10 +75,10 @@ p, li { white-space: pre-wrap; }
 hr { height: 1px; border-width: 0; }
 li.unchecked::marker { content: &quot;\2610&quot;; }
 li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-weight:600;&quot;&gt;Create &lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-weight:600; font-style:italic;&quot;&gt;XBeach&lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-weight:600;&quot;&gt; grid and bathymetry.&lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt;&quot;&gt; &lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt;&quot;&gt;Remember, the origin of an &lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-style:italic;&quot;&gt;XBeach&lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt;&quot;&gt; model (yellow corner) should always be offshore. X increases in the onshore direction. Facing offshore, Y increases to the right. Work in UTM units or risk disaster! &lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a href=&quot;https://xbeach.readthedocs.io/en/latest/&quot;&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; text-decoration: underline; color:#0000ff;&quot;&gt;XBeach manual&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Create &lt;/span&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;XBeach&lt;/span&gt;&lt;span style=&quot; font-weight:600;&quot;&gt; grid and bathymetry.&lt;/span&gt; &lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Remember, the origin of an &lt;span style=&quot; font-style:italic;&quot;&gt;XBeach&lt;/span&gt; model (yellow corner) should always be offshore. X increases in the onshore direction. Facing offshore, Y increases to the right. Work in UTM units or risk disaster! &lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a href=&quot;https://xbeach.readthedocs.io/en/latest/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;XBeach manual&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                </widget>
               </item>
@@ -87,10 +87,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="title">
                  <string>Draw regular grid</string>
                 </property>
-                <property name="collapsed" stdset="0">
+                <property name="collapsed">
                  <bool>true</bool>
                 </property>
-                <property name="saveCollapsedState" stdset="0">
+                <property name="saveCollapsedState">
                  <bool>true</bool>
                 </property>
                 <layout class="QGridLayout" name="gridLayout">
@@ -426,7 +426,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="title">
                  <string>Generate bathymetry files</string>
                 </property>
-                <property name="collapsed" stdset="0">
+                <property name="collapsed">
                  <bool>true</bool>
                 </property>
                 <layout class="QGridLayout" name="gridLayout_2">
@@ -484,7 +484,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </layout>
                    </item>
                    <item>
-                    <widget class="QgsFileWidget" name="fwSetwd" native="true"/>
+                    <widget class="QgsFileWidget" name="fwSetwd"/>
                    </item>
                    <item>
                     <layout class="QHBoxLayout" name="horizontalLayout_12">
@@ -520,7 +520,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="title">
                  <string>Make optional *.dep files</string>
                 </property>
-                <property name="collapsed" stdset="0">
+                <property name="collapsed">
                  <bool>true</bool>
                 </property>
                 <layout class="QGridLayout" name="gridLayout_3">
@@ -717,7 +717,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      <item>
                       <widget class="QLabel" name="labDefaultErodible">
                        <property name="text">
-                        <string>Default erodible depth</string>
+                        <string>Default erodible depth (m)</string>
                        </property>
                       </widget>
                      </item>
@@ -854,12 +854,15 @@ li.checked::marker { content: &quot;\2612&quot;; }
                          <height>0</height>
                         </size>
                        </property>
+                       <property name="value">
+                        <double>0.500000000000000</double>
+                       </property>
                       </widget>
                      </item>
                      <item>
                       <widget class="QLabel" name="labDefaultGrainSize">
                        <property name="text">
-                        <string>Default D50</string>
+                        <string>Default D50 (mm)</string>
                        </property>
                       </widget>
                      </item>
@@ -931,7 +934,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLabel" name="lbSeidmentUseField">
+                      <widget class="QLabel" name="lbSedimentUseField">
                        <property name="text">
                         <string>Use field</string>
                        </property>
@@ -979,7 +982,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <item>
                     <layout class="QHBoxLayout" name="horizontalLayout_61">
                      <item>
-                      <widget class="QgsFileWidget" name="qgsfwXgridBB" native="true">
+                      <widget class="QgsFileWidget" name="qgsfwXgridBB">
                        <property name="minimumSize">
                         <size>
                          <width>177</width>
@@ -1013,7 +1016,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <item>
                     <layout class="QHBoxLayout" name="horizontalLayout_62">
                      <item>
-                      <widget class="QgsFileWidget" name="qgsfwYgridBB" native="true">
+                      <widget class="QgsFileWidget" name="qgsfwYgridBB">
                        <property name="minimumSize">
                         <size>
                          <width>177</width>
@@ -1047,7 +1050,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <item>
                     <layout class="QHBoxLayout" name="horizontalLayout_63">
                      <item>
-                      <widget class="QgsFileWidget" name="qgsfwBedDepBB" native="true">
+                      <widget class="QgsFileWidget" name="qgsfwBedDepBB">
                        <property name="minimumSize">
                         <size>
                          <width>177</width>
@@ -1103,7 +1106,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </layout>
                    </item>
                    <item>
-                    <widget class="QgsFileWidget" name="fwSetwdBB2" native="true"/>
+                    <widget class="QgsFileWidget" name="fwSetwdBB2"/>
                    </item>
                    <item>
                     <layout class="QHBoxLayout" name="horizontalLayout_68">
@@ -1166,7 +1169,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
        <attribute name="title">
         <string>ModelMaker</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout_16">
+       <layout class="QGridLayout" name="gridLayout_19">
         <item row="0" column="0">
          <widget class="QScrollArea" name="saMM">
           <property name="widgetResizable">
@@ -1177,13 +1180,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>344</width>
-             <height>1454</height>
+             <width>358</width>
+             <height>882</height>
             </rect>
            </property>
-           <layout class="QGridLayout" name="gridLayout_15">
+           <layout class="QGridLayout" name="gridLayout_16">
             <item row="0" column="0">
-             <layout class="QVBoxLayout" name="verticalLayout_8">
+             <layout class="QVBoxLayout" name="verticalLayout_14">
               <item>
                <widget class="QTextBrowser" name="txtbModelMaker">
                 <property name="minimumSize">
@@ -1205,9 +1208,9 @@ p, li { white-space: pre-wrap; }
 hr { height: 1px; border-width: 0; }
 li.unchecked::marker { content: &quot;\2610&quot;; }
 li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-weight:600;&quot;&gt;Create &lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-weight:600; font-style:italic;&quot;&gt;XBeach&lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-weight:600;&quot;&gt; model.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt;&quot;&gt;Generate simple &lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-style:italic;&quot;&gt;jonswap.txt&lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt;&quot;&gt;, &lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-style:italic;&quot;&gt;params.txt&lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt;&quot;&gt;, and &lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-style:italic;&quot;&gt;tide.txt&lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt;&quot;&gt; files. Consult the &lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-style:italic;&quot;&gt;XBeach&lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt;&quot;&gt; manual online for detailed information on available &lt;/span&gt;&lt;a href=&quot;https://xbeach.readthedocs.io/en/latest/input_parameters.html&quot;&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; text-decoration: underline; color:#0000ff;&quot;&gt;input parameters&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt;&quot;&gt; and &lt;/span&gt;&lt;a href=&quot;https://xbeach.readthedocs.io/en/latest/output_variables.html&quot;&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; text-decoration: underline; color:#0000ff;&quot;&gt;output variables&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Create &lt;/span&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;XBeach&lt;/span&gt;&lt;span style=&quot; font-weight:600;&quot;&gt; model.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Generate simple &lt;span style=&quot; font-style:italic;&quot;&gt;jonswap.txt&lt;/span&gt;, &lt;span style=&quot; font-style:italic;&quot;&gt;params.txt&lt;/span&gt;, and &lt;span style=&quot; font-style:italic;&quot;&gt;tide.txt&lt;/span&gt; files. Consult the &lt;span style=&quot; font-style:italic;&quot;&gt;XBeach&lt;/span&gt; manual online for detailed information on available &lt;a href=&quot;https://xbeach.readthedocs.io/en/latest/input_parameters.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;input parameters&lt;/span&gt;&lt;/a&gt; and &lt;a href=&quot;https://xbeach.readthedocs.io/en/latest/output_variables.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;output variables&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                </widget>
               </item>
@@ -1216,10 +1219,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="title">
                  <string>Model input parameters</string>
                 </property>
-                <property name="collapsed" stdset="0">
+                <property name="collapsed">
                  <bool>true</bool>
                 </property>
-                <property name="saveCollapsedState" stdset="0">
+                <property name="saveCollapsedState">
                  <bool>true</bool>
                 </property>
                 <layout class="QGridLayout" name="gridLayout_7">
@@ -1522,9 +1525,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <item>
                <widget class="QgsCollapsibleGroupBox" name="gbOutputVariables">
                 <property name="title">
-                 <string>Output variables</string>
+                 <string>Select output variables</string>
                 </property>
-                <property name="collapsed" stdset="0">
+                <property name="collapsed">
                  <bool>true</bool>
                 </property>
                 <layout class="QGridLayout" name="gridLayout_12">
@@ -2000,7 +2003,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="title">
                  <string>Use .grd and .dep files</string>
                 </property>
-                <property name="collapsed" stdset="0">
+                <property name="collapsed">
                  <bool>true</bool>
                 </property>
                 <layout class="QGridLayout" name="gridLayout_9">
@@ -2009,7 +2012,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <item>
                     <layout class="QHBoxLayout" name="horizontalLayout_25">
                      <item>
-                      <widget class="QgsFileWidget" name="xgrdQgsFileWidget2" native="true">
+                      <widget class="QgsFileWidget" name="xgrdQgsFileWidget2">
                        <property name="minimumSize">
                         <size>
                          <width>177</width>
@@ -2043,7 +2046,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <item>
                     <layout class="QHBoxLayout" name="horizontalLayout_26">
                      <item>
-                      <widget class="QgsFileWidget" name="ygrdQgsFileWidget2" native="true">
+                      <widget class="QgsFileWidget" name="ygrdQgsFileWidget2">
                        <property name="minimumSize">
                         <size>
                          <width>177</width>
@@ -2077,7 +2080,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <item>
                     <layout class="QHBoxLayout" name="horizontalLayout_27">
                      <item>
-                      <widget class="QgsFileWidget" name="beddepQgsFileWidget2" native="true">
+                      <widget class="QgsFileWidget" name="beddepQgsFileWidget2">
                        <property name="minimumSize">
                         <size>
                          <width>177</width>
@@ -2114,11 +2117,69 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </widget>
               </item>
               <item>
+               <widget class="QgsCollapsibleGroupBox" name="gbOptionalDepFiles">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QgsCollapsibleGroupBoxBasic::title, QgsCollapsibleGroupBox::title {  subcontrol-origin: margin;  subcontrol-position: top left;  margin-left: 20px;  margin-right: 5px;  left: 0px;  top: 1px;} QgsCollapsibleGroupBoxBasic { border: none; }</string>
+                </property>
+                <property name="title">
+                 <string>Use optional .dep files</string>
+                </property>
+                <property name="collapsed">
+                 <bool>true</bool>
+                </property>
+                <layout class="QGridLayout" name="gridLayout_15">
+                 <item row="0" column="0">
+                  <layout class="QVBoxLayout" name="verticalLayout_8">
+                   <item>
+                    <widget class="QCheckBox" name="cbUseManning">
+                     <property name="text">
+                      <string>Use Manning .dep file</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QgsFileWidget" name="qfwOptionalManning"/>
+                   </item>
+                   <item>
+                    <widget class="QCheckBox" name="cbUseNonErodible">
+                     <property name="text">
+                      <string>Use non-erodible .dep file</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QgsFileWidget" name="qfwOptionalNonErodible"/>
+                   </item>
+                   <item>
+                    <widget class="QCheckBox" name="cbUseSediments">
+                     <property name="enabled">
+                      <bool>false</bool>
+                     </property>
+                     <property name="text">
+                      <string>Use sediments .dep file</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QgsFileWidget" name="qfwOptionalSediments"/>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
                <widget class="QgsCollapsibleGroupBox" name="gbOutputModel">
                 <property name="title">
                  <string>Generate model files</string>
                 </property>
-                <property name="collapsed" stdset="0">
+                <property name="collapsed">
                  <bool>true</bool>
                 </property>
                 <layout class="QGridLayout" name="gridLayout_8">
@@ -2149,7 +2210,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </layout>
                    </item>
                    <item>
-                    <widget class="QgsFileWidget" name="fwSetwd2" native="true"/>
+                    <widget class="QgsFileWidget" name="fwSetwd2"/>
                    </item>
                    <item>
                     <layout class="QHBoxLayout" name="horizontalLayout_24">
@@ -2224,7 +2285,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <x>0</x>
              <y>0</y>
              <width>358</width>
-             <height>884</height>
+             <height>882</height>
             </rect>
            </property>
            <layout class="QGridLayout" name="gridLayout_13">
@@ -2257,10 +2318,10 @@ p, li { white-space: pre-wrap; }
 hr { height: 1px; border-width: 0; }
 li.unchecked::marker { content: &quot;\2610&quot;; }
 li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans Serif'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-weight:600;&quot;&gt;Explore &lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-weight:600; font-style:italic;&quot;&gt;XBeach&lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-weight:600;&quot;&gt; model results.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt;&quot;&gt;Plot to check bed.dep, manning.dep, nonerodible.dep, or sediment.dep files. &lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt;&quot;&gt;Alternatively, open an &lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-style:italic;&quot;&gt;xboutput.nc &lt;/span&gt;&lt;span style=&quot; font-family:'Ubuntu Sans'; font-size:11pt;&quot;&gt;file and plot variables at various time steps.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu Sans'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Explore &lt;/span&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;XBeach&lt;/span&gt;&lt;span style=&quot; font-weight:600;&quot;&gt; model results.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Plot to check bed.dep, manning.dep, nonerodible.dep, or sediment.dep files. &lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Alternatively, open an &lt;span style=&quot; font-style:italic;&quot;&gt;xboutput.nc &lt;/span&gt;file and plot variables at various time steps.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                </widget>
               </item>
@@ -2269,7 +2330,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="title">
                  <string>View *.dep file</string>
                 </property>
-                <property name="collapsed" stdset="0">
+                <property name="collapsed">
                  <bool>true</bool>
                 </property>
                 <layout class="QGridLayout" name="gridLayout_4">
@@ -2278,7 +2339,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <item>
                     <layout class="QHBoxLayout" name="horizontalLayout_14">
                      <item>
-                      <widget class="QgsFileWidget" name="xgrdQgsFileWidget" native="true">
+                      <widget class="QgsFileWidget" name="xgrdQgsFileWidget">
                        <property name="minimumSize">
                         <size>
                          <width>177</width>
@@ -2312,7 +2373,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <item>
                     <layout class="QHBoxLayout" name="horizontalLayout_15">
                      <item>
-                      <widget class="QgsFileWidget" name="ygrdQgsFileWidget" native="true">
+                      <widget class="QgsFileWidget" name="ygrdQgsFileWidget">
                        <property name="minimumSize">
                         <size>
                          <width>177</width>
@@ -2346,7 +2407,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <item>
                     <layout class="QHBoxLayout" name="horizontalLayout_16">
                      <item>
-                      <widget class="QgsFileWidget" name="beddepQgsFileWidget" native="true">
+                      <widget class="QgsFileWidget" name="beddepQgsFileWidget">
                        <property name="minimumSize">
                         <size>
                          <width>177</width>
@@ -2411,7 +2472,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="title">
                  <string>Inspect model output</string>
                 </property>
-                <property name="collapsed" stdset="0">
+                <property name="collapsed">
                  <bool>true</bool>
                 </property>
                 <layout class="QGridLayout" name="gridLayout_11">
@@ -2442,7 +2503,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </layout>
                    </item>
                    <item>
-                    <widget class="QgsFileWidget" name="xboutputFileWidget" native="true">
+                    <widget class="QgsFileWidget" name="xboutputFileWidget">
                      <property name="minimumSize">
                       <size>
                        <width>177</width>
