@@ -104,6 +104,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.cbUseManning.toggled.connect(self.onUseManningToggled)
         self.cbUseNonErodible.toggled.connect(self.onUseNonErodibleToggled)
         self.cbUseSediments.toggled.connect(self.onUseSedimentsToggled)
+        self.sbModelDuration.valueChanged.connect(self.onModelDurationChanged)
 
         # initialize optional layer enabled states
         self.onManningLayerToggled(self.cbManningLayer.isChecked())
@@ -413,6 +414,8 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def resetInputParams(self):
         self.sbModelDuration.setValue(DEFAULT_SETTINGS['duration'])
+        self.onModelDurationChanged(self.sbModelDuration.value())
+        self.sbTimestep.setValue(DEFAULT_SETTINGS['timestep'])
         self.dsbTide.setValue(DEFAULT_SETTINGS['tide'])
         self.dsbWaveHeight.setValue(DEFAULT_SETTINGS['Hm0'])
         self.dsbWavePeriod.setValue(DEFAULT_SETTINGS['Tp'])
@@ -441,6 +444,9 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # clear output variable line edits
         self.leOutputVariables.clear()
         self.leOtherMeans.clear()
+
+    def onModelDurationChanged(self, value):
+        self.sbTimestep.setRange(1, max(1, int(value / 2)))
 
     def onUseManningToggled(self, checked):
         self.qfwOptionalManning.setEnabled(checked)
@@ -565,7 +571,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'date': datetime.datetime.now().strftime("%Y-%m-%d"),
             'duration': self.sbModelDuration.value(),
             'tstop': self.sbModelDuration.value()+1,
-            'tintg': int(self.sbModelDuration.value()/10),
+            'tintg': self.sbTimestep.value(),
             'tide': self.dsbTide.value(),
             'Hm0': self.dsbWaveHeight.value(),
             'Tp': self.dsbWavePeriod.value(),

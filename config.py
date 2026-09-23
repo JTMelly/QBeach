@@ -10,6 +10,7 @@ DEFAULT_SETTINGS = {
     'skip_x': 1,
     'skip_y': 1,
     'duration': 600,
+    'timestep': 60,
     'tide': 0.0,
     'Hm0': 1.0,
     'Tp': 6.0,
