@@ -167,6 +167,44 @@ def create_temp_raster(E, N, Z, crs_wkt):
     
     return temp_path
 
+def robust_range(Z, abs_limit=1e10, p_low=2.0, p_high=98.0):
+    """Compute color-scale limits robust to XBeach dry-cell fill values.
+
+    XBeach writes dry (land) cells using extreme fill values such as the
+    float32 lower bound (-3.4028235e+38). These destroy naive min/max
+    statistics, collapsing all wet-cell values into a narrow band of the
+    colour ramp. This helper excludes non-finite and magnitude-sentinel
+    values, then limits the range to the given percentiles of the
+    remaining data.
+
+    Args:
+        Z (ndarray): 2D array of variable values.
+        abs_limit (float): Values with magnitude >= this are treated as
+            fill sentinels and excluded. Defaults to 1e10.
+        p_low (float): Lower percentile (0-100) mapped to the bottom of
+            the ramp. Defaults to 2.0.
+        p_high (float): Upper percentile (0-100) mapped to the top of
+            the ramp. Defaults to 98.0.
+
+    Returns:
+        tuple: (z_min, z_max, valid_mask)
+            - z_min (float): Ramp lower bound (0.0 if no valid cells).
+            - z_max (float): Ramp upper bound (1.0 if no valid cells).
+            - valid_mask (ndarray): Boolean mask of cells considered
+              valid data (wet cells).
+    """
+
+    Z = np.asarray(Z, dtype=float)
+    valid_mask = np.isfinite(Z) & (np.abs(Z) < abs_limit)
+    values = Z[valid_mask]
+
+    if values.size == 0:
+        return 0.0, 1.0, valid_mask
+
+    z_min, z_max = np.percentile(values, [p_low, p_high])
+    return float(z_min), float(z_max), valid_mask
+
+
 def apply_viridis_renderer(layer, min_val, max_val):
     """Apply a Viridis-style pseudo-colour renderer to a raster layer.
 

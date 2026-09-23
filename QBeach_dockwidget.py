@@ -26,7 +26,7 @@ from qgis.core import (QgsRasterLayer,
                        QgsMapLayerProxyModel, QgsProject)
 
 from .core.grid import calculate_grid, GridVisualizer
-from .core.raster import sample_raster_at_grid, sample_vector_at_grid, create_temp_raster, apply_viridis_renderer, HAS_GDAL
+from .core.raster import sample_raster_at_grid, sample_vector_at_grid, create_temp_raster, apply_viridis_renderer, robust_range, HAS_GDAL
 from .core.export import export_xbeach_model, load_grid_files
 from .core.netcdf import get_netcdf_info, read_netcdf_variable
 from .core.compat import QGIS_INFO, QGIS_SUCCESS, QGIS_WARNING, load_ui_type
@@ -776,8 +776,15 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 QtWidgets.QMessageBox.critical(self, "Error", "Failed to read data or coordinates from NetCDF.")
                 return
     
+            z_min, z_max, valid_mask = robust_range(
+                Z,
+                abs_limit=DEFAULT_SETTINGS['plot_abs_limit'],
+                p_low=DEFAULT_SETTINGS['plot_p_low'],
+                p_high=DEFAULT_SETTINGS['plot_p_high'])
+            Z_plot = np.where(valid_mask, Z, np.nan)
+            
             crs = self.iface.mapCanvas().mapSettings().destinationCrs()
-            temp_path = create_temp_raster(E, N, Z, crs.toWkt())
+            temp_path = create_temp_raster(E, N, Z_plot, crs.toWkt())
             
             layer_name = f"{var_name}_step{timestep}"
             rlayer = QgsRasterLayer(temp_path, layer_name)
@@ -786,13 +793,6 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 QtWidgets.QMessageBox.critical(self, "Load Error", "Failed to load the temporary raster layer.")
                 return
     
-            z_valid = Z[~np.isnan(Z)] # values used to apply styles to raster
-            if z_valid.size > 0:
-                z_min = float(np.nanmin(z_valid))
-                z_max = float(np.nanmax(z_valid))
-            else:
-                z_min, z_max = 0.0, 1.0
-            
             apply_viridis_renderer(rlayer, z_min, z_max)
             QgsProject.instance().addMapLayer(rlayer)
             
