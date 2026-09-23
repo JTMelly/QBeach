@@ -20,7 +20,7 @@ import numpy as np
 from .config import DEFAULT_SETTINGS
 
 from qgis.PyQt import QtWidgets
-from qgis.PyQt.QtCore import pyqtSignal, QTimer
+from qgis.PyQt.QtCore import pyqtSignal, QTimer, QVariant
 from qgis.gui import QgsFileWidget
 from qgis.core import (QgsRasterLayer,
                        QgsMapLayerProxyModel, QgsProject)
@@ -29,6 +29,7 @@ from .core.grid import calculate_grid, GridVisualizer
 from .core.raster import sample_raster_at_grid, sample_vector_at_grid, create_temp_raster, apply_viridis_renderer, robust_range, HAS_GDAL
 from .core.export import export_xbeach_model, load_grid_files
 from .core.netcdf import get_netcdf_info, read_netcdf_variable
+from .core.times import layer_elapsed_seconds
 from .core.compat import QGIS_INFO, QGIS_SUCCESS, QGIS_WARNING, load_ui_type
 
 FORM_CLASS, _ = load_ui_type(os.path.join(
@@ -57,6 +58,8 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.mlcbNonErodibleSource.setLayer(None)
         self.mlcbSedimentSource.setFilters(QgsMapLayerProxyModel.VectorLayer)
         self.mlcbSedimentSource.setLayer(None)
+        self.mlcbTideTable.setFilters(QgsMapLayerProxyModel.VectorLayer)
+        self.mlcbTideTable.setLayer(None)
 
         # restrict file widgets by file types
         self.xgrdQgsFileWidget.setFilter("*.grd")
@@ -96,6 +99,9 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.mlcbManningSource.layerChanged.connect(self.onManningLayerChanged)
         self.mlcbNonErodibleSource.layerChanged.connect(self.onNonErodibleLayerChanged)
         self.mlcbSedimentSource.layerChanged.connect(self.onSedimentLayerChanged)
+        self.mlcbTideTable.layerChanged.connect(self.onTideTableLayerChanged)
+        self.cbDateColumn.currentIndexChanged.connect(self.onTideColumnsChanged)
+        self.cbTimeColumn.currentIndexChanged.connect(self.onTideColumnsChanged)
         self.cbManningLayer.toggled.connect(self.onManningLayerToggled)
         self.cbManningDefaultOnly.toggled.connect(self.onManningDefaultOnlyToggled)
         self.cbNonErodibleLayer.toggled.connect(self.onNonErodibleLayerToggled)
@@ -105,6 +111,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.cbUseNonErodible.toggled.connect(self.onUseNonErodibleToggled)
         self.cbUseSediments.toggled.connect(self.onUseSedimentsToggled)
         self.sbModelDuration.valueChanged.connect(self.onModelDurationChanged)
+        self.cbVariableTides.toggled.connect(self.onVariableTidesToggled)
 
         # initialize optional layer enabled states
         self.onManningLayerToggled(self.cbManningLayer.isChecked())
@@ -139,6 +146,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.gbOptionalDepFiles.setCollapsed(True)
         self.gbOutputModel.setCollapsed(True)
         self.resultsGroupBox.setCollapsed(True)
+        self.cgbVariableTides.setCollapsed(True)
         self.tabQBeach.setCurrentIndex(0)
 
         # uncheck optional checkboxes
@@ -157,6 +165,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.mlcbManningSource.setLayer(None)
         self.mlcbNonErodibleSource.setLayer(None)
         self.mlcbSedimentSource.setLayer(None)
+        self.mlcbTideTable.setLayer(None)
         self.cbManningHeading.clear()
 
         # clear file widgets
@@ -416,6 +425,8 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.sbModelDuration.setValue(DEFAULT_SETTINGS['duration'])
         self.onModelDurationChanged(self.sbModelDuration.value())
         self.sbTimestep.setValue(DEFAULT_SETTINGS['timestep'])
+        self.cbVariableTides.setChecked(False)
+        self.onVariableTidesToggled(self.cbVariableTides.isChecked())
         self.dsbTide.setValue(DEFAULT_SETTINGS['tide'])
         self.dsbWaveHeight.setValue(DEFAULT_SETTINGS['Hm0'])
         self.dsbWavePeriod.setValue(DEFAULT_SETTINGS['Tp'])
@@ -450,6 +461,47 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def onUseManningToggled(self, checked):
         self.qfwOptionalManning.setEnabled(checked)
+
+    def onVariableTidesToggled(self, checked):
+        self.sbModelDuration.setEnabled(not checked)
+        self.lbDuration.setEnabled(not checked)
+        self.cgbVariableTides.setEnabled(checked)
+        if checked:
+            self.cgbVariableTides.setCollapsed(False)
+        else:
+            self.mlcbTideTable.setLayer(None)
+            self.sbModelDuration.setValue(DEFAULT_SETTINGS['duration'])
+            self.onModelDurationChanged(self.sbModelDuration.value())
+            self.sbTimestep.setValue(DEFAULT_SETTINGS['timestep'])
+            self.cgbVariableTides.setCollapsed(True)
+
+    def onTideTableLayerChanged(self, layer):
+        self.cbDateColumn.clear()
+        self.cbTimeColumn.clear()
+        self.cbLeftTideColumn.clear()
+        self.cbRightTideColumn.clear()
+        if layer and layer.isValid():
+            for field in layer.fields():
+                if field.type() == QVariant.Date:
+                    self.cbDateColumn.addItem(field.name())
+                if field.type() == QVariant.Time:
+                    self.cbTimeColumn.addItem(field.name())
+                if field.isNumeric():
+                    self.cbLeftTideColumn.addItem(field.name())
+                    self.cbRightTideColumn.addItem(field.name())
+
+    def onTideColumnsChanged(self, index=0):
+        layer = self.mlcbTideTable.currentLayer()
+        date_field = self.cbDateColumn.currentText()
+        time_field = self.cbTimeColumn.currentText()
+        if not (layer and layer.isValid() and date_field and time_field):
+            return
+        seconds = layer_elapsed_seconds(layer, date_field, time_field)
+        if seconds is not None:
+            duration = int(round(seconds))
+            self.sbModelDuration.setValue(duration)
+            # ~10 total timesteps, rounded to the nearest 10 s
+            self.sbTimestep.setValue(max(1, int(round(duration / 100.0)) * 10))
 
     def onUseNonErodibleToggled(self, checked):
         self.qfwOptionalNonErodible.setEnabled(checked)

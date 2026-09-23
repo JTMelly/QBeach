@@ -146,4 +146,5 @@ class QBeach:
         self.dockwidget.gbOutputVariables.setCollapsed(True)
         self.dockwidget.gbOutputModel.setCollapsed(True)
         self.dockwidget.resultsGroupBox.setCollapsed(True)
+        self.dockwidget.cgbVariableTides.setCollapsed(True)
         self.dockwidget.tabQBeach.setCurrentIndex(0)
