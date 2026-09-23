@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
+    <width>388</width>
     <height>972</height>
    </rect>
   </property>
@@ -30,7 +30,7 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabQBeach">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tabBB">
        <attribute name="title">
@@ -47,7 +47,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>358</width>
+             <width>346</width>
              <height>882</height>
             </rect>
            </property>
@@ -290,6 +290,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                          <height>0</height>
                         </size>
                        </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>100</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
                       </widget>
                      </item>
                      <item>
@@ -324,6 +330,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                          <height>0</height>
                         </size>
                        </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>100</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
                       </widget>
                      </item>
                      <item>
@@ -356,6 +368,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                         <size>
                          <width>90</width>
                          <height>0</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>100</width>
+                         <height>16777215</height>
                         </size>
                        </property>
                        <property name="maximum">
@@ -1169,7 +1187,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
        <attribute name="title">
         <string>ModelMaker</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout_19">
+       <layout class="QGridLayout" name="gridLayout_16">
         <item row="0" column="0">
          <widget class="QScrollArea" name="saMM">
           <property name="widgetResizable">
@@ -1180,13 +1198,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>358</width>
+             <width>346</width>
              <height>882</height>
             </rect>
            </property>
-           <layout class="QGridLayout" name="gridLayout_16">
+           <layout class="QGridLayout" name="gridLayout_9">
             <item row="0" column="0">
-             <layout class="QVBoxLayout" name="verticalLayout_14">
+             <layout class="QVBoxLayout" name="verticalLayout_7">
               <item>
                <widget class="QTextBrowser" name="txtbModelMaker">
                 <property name="minimumSize">
@@ -1220,7 +1238,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <string>Model input parameters</string>
                 </property>
                 <property name="collapsed">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                 <property name="saveCollapsedState">
                  <bool>true</bool>
@@ -1237,6 +1255,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                          <width>90</width>
                          <height>0</height>
                         </size>
+                       </property>
+                       <property name="minimum">
+                        <number>2</number>
                        </property>
                        <property name="maximum">
                         <number>999999</number>
@@ -1258,6 +1279,94 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        <property name="sizeHint" stdset="0">
                         <size>
                          <width>38</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_69">
+                     <item>
+                      <widget class="QSpinBox" name="sbTimestep">
+                       <property name="minimum">
+                        <number>1</number>
+                       </property>
+                       <property name="maximum">
+                        <number>499999</number>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="lbTimestep">
+                       <property name="text">
+                        <string>Timesteps (s)</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="horizontalSpacer_68">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>40</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_70">
+                     <item>
+                      <widget class="QCheckBox" name="cbVariableTides">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
+                       <property name="text">
+                        <string>Use time-varying tides</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="horizontalSpacer_69">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>40</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_71">
+                     <item>
+                      <widget class="QCheckBox" name="cbVariableWaves">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
+                       <property name="text">
+                        <string>Use time-varying waves</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="horizontalSpacer_70">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>40</width>
                          <height>20</height>
                         </size>
                        </property>
@@ -1520,6 +1629,35 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   </layout>
                  </item>
                 </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QgsCollapsibleGroupBox" name="cgbVariableTides">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true"> QgsCollapsibleGroupBoxBasic { border: none; }QgsCollapsibleGroupBoxBasic::title, QgsCollapsibleGroupBox::title {  subcontrol-origin: margin;  subcontrol-position: top left;  margin-left: 20px;  margin-right: 5px;  left: 0px;  top: 1px;}</string>
+                </property>
+                <property name="title">
+                 <string>Input time-varying tides</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QgsCollapsibleGroupBox" name="cgbVariableWaves">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true"> QgsCollapsibleGroupBoxBasic { border: none; }QgsCollapsibleGroupBoxBasic::title, QgsCollapsibleGroupBox::title {  subcontrol-origin: margin;  subcontrol-position: top left;  margin-left: 20px;  margin-right: 5px;  left: 0px;  top: 1px;}</string>
+                </property>
+                <property name="title">
+                 <string>Input time-varying waves</string>
+                </property>
+                <property name="collapsed">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
               <item>
@@ -1999,16 +2137,74 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </widget>
               </item>
               <item>
-               <widget class="QgsCollapsibleGroupBox" name="gbUseGrdDep">
+               <widget class="QgsCollapsibleGroupBox" name="gbOptionalDepFiles">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QgsCollapsibleGroupBoxBasic::title, QgsCollapsibleGroupBox::title {  subcontrol-origin: margin;  subcontrol-position: top left;  margin-left: 20px;  margin-right: 5px;  left: 0px;  top: 1px;}QgsCollapsibleGroupBoxBasic::title, QgsCollapsibleGroupBox::title {  subcontrol-origin: margin;  subcontrol-position: top left;  margin-left: 20px;  margin-right: 5px;  left: 0px;  top: 1px;}QgsCollapsibleGroupBoxBasic::title, QgsCollapsibleGroupBox::title {  subcontrol-origin: margin;  subcontrol-position: top left;  margin-left: 20px;  margin-right: 5px;  left: 0px;  top: 1px;} QgsCollapsibleGroupBoxBasic { border: none; }</string>
+                </property>
                 <property name="title">
-                 <string>Use .grd and .dep files</string>
+                 <string>Use optional .dep files</string>
                 </property>
                 <property name="collapsed">
                  <bool>true</bool>
                 </property>
-                <layout class="QGridLayout" name="gridLayout_9">
+                <layout class="QGridLayout" name="gridLayout_15">
                  <item row="0" column="0">
-                  <layout class="QVBoxLayout" name="verticalLayout_7">
+                  <layout class="QVBoxLayout" name="verticalLayout_8">
+                   <item>
+                    <widget class="QCheckBox" name="cbUseManning">
+                     <property name="text">
+                      <string>Use Manning .dep file</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QgsFileWidget" name="qfwOptionalManning"/>
+                   </item>
+                   <item>
+                    <widget class="QCheckBox" name="cbUseNonErodible">
+                     <property name="text">
+                      <string>Use non-erodible .dep file</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QgsFileWidget" name="qfwOptionalNonErodible"/>
+                   </item>
+                   <item>
+                    <widget class="QCheckBox" name="cbUseSediments">
+                     <property name="enabled">
+                      <bool>false</bool>
+                     </property>
+                     <property name="text">
+                      <string>Use sediments .dep file</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QgsFileWidget" name="qfwOptionalSediments"/>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QgsCollapsibleGroupBox" name="gbOutputModel">
+                <property name="title">
+                 <string>Generate model files</string>
+                </property>
+                <property name="collapsed">
+                 <bool>true</bool>
+                </property>
+                <layout class="QGridLayout" name="gridLayout_8">
+                 <item row="0" column="0">
+                  <layout class="QVBoxLayout" name="verticalLayout_5">
                    <item>
                     <layout class="QHBoxLayout" name="horizontalLayout_25">
                      <item>
@@ -2111,80 +2307,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </item>
                     </layout>
                    </item>
-                  </layout>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-              <item>
-               <widget class="QgsCollapsibleGroupBox" name="gbOptionalDepFiles">
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QgsCollapsibleGroupBoxBasic::title, QgsCollapsibleGroupBox::title {  subcontrol-origin: margin;  subcontrol-position: top left;  margin-left: 20px;  margin-right: 5px;  left: 0px;  top: 1px;}QgsCollapsibleGroupBoxBasic::title, QgsCollapsibleGroupBox::title {  subcontrol-origin: margin;  subcontrol-position: top left;  margin-left: 20px;  margin-right: 5px;  left: 0px;  top: 1px;} QgsCollapsibleGroupBoxBasic { border: none; }</string>
-                </property>
-                <property name="title">
-                 <string>Use optional .dep files</string>
-                </property>
-                <property name="collapsed">
-                 <bool>true</bool>
-                </property>
-                <layout class="QGridLayout" name="gridLayout_15">
-                 <item row="0" column="0">
-                  <layout class="QVBoxLayout" name="verticalLayout_8">
-                   <item>
-                    <widget class="QCheckBox" name="cbUseManning">
-                     <property name="text">
-                      <string>Use Manning .dep file</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QgsFileWidget" name="qfwOptionalManning"/>
-                   </item>
-                   <item>
-                    <widget class="QCheckBox" name="cbUseNonErodible">
-                     <property name="text">
-                      <string>Use non-erodible .dep file</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QgsFileWidget" name="qfwOptionalNonErodible"/>
-                   </item>
-                   <item>
-                    <widget class="QCheckBox" name="cbUseSediments">
-                     <property name="enabled">
-                      <bool>false</bool>
-                     </property>
-                     <property name="text">
-                      <string>Use sediments .dep file</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QgsFileWidget" name="qfwOptionalSediments"/>
-                   </item>
-                  </layout>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-              <item>
-               <widget class="QgsCollapsibleGroupBox" name="gbOutputModel">
-                <property name="title">
-                 <string>Generate model files</string>
-                </property>
-                <property name="collapsed">
-                 <bool>true</bool>
-                </property>
-                <layout class="QGridLayout" name="gridLayout_8">
-                 <item row="0" column="0">
-                  <layout class="QVBoxLayout" name="verticalLayout_5">
                    <item>
                     <layout class="QHBoxLayout" name="horizontalLayout_23">
                      <item>
@@ -2284,7 +2406,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>358</width>
+             <width>346</width>
              <height>882</height>
             </rect>
            </property>

@@ -135,7 +135,6 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.depGroupBox.setCollapsed(True)
         self.gbInputParameters.setCollapsed(True)
         self.gbOutputVariables.setCollapsed(True)
-        self.gbUseGrdDep.setCollapsed(True)
         self.gbOptionalDepFiles.setCollapsed(True)
         self.gbOutputModel.setCollapsed(True)
         self.resultsGroupBox.setCollapsed(True)
