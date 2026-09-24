@@ -465,14 +465,18 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def onVariableTidesToggled(self, checked):
         self.sbModelDuration.setEnabled(not checked)
         self.lbDuration.setEnabled(not checked)
+        self.dsbTide.setEnabled(not checked)
+        self.lbTide.setEnabled(not checked)
         self.cgbVariableTides.setEnabled(checked)
         if checked:
             self.cgbVariableTides.setCollapsed(False)
+            self.dsbTide.setValue(DEFAULT_SETTINGS['tide'])
         else:
             self.mlcbTideTable.setLayer(None)
             self.sbModelDuration.setValue(DEFAULT_SETTINGS['duration'])
             self.onModelDurationChanged(self.sbModelDuration.value())
             self.sbTimestep.setValue(DEFAULT_SETTINGS['timestep'])
+            self.dsbTide.setValue(DEFAULT_SETTINGS['tide'])
             self.cgbVariableTides.setCollapsed(True)
 
     def onTideTableLayerChanged(self, layer):
