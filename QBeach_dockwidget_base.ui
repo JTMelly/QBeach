@@ -26,7 +26,7 @@
    <string>QBeach</string>
   </property>
   <widget class="QWidget" name="dockWidgetContents">
-   <layout class="QGridLayout" name="gridLayout_19">
+   <layout class="QGridLayout" name="gridLayout_20">
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabQBeach">
       <property name="currentIndex">
@@ -1187,13 +1187,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
        <attribute name="title">
         <string>ModelMaker</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout_18">
+       <layout class="QGridLayout" name="gridLayout_19">
         <item row="0" column="0">
          <widget class="QScrollArea" name="saMM">
           <property name="widgetResizable">
            <bool>true</bool>
           </property>
-          <widget class="QWidget" name="scrollAreaWidgetContents_2">
+          <widget class="QWidget" name="ModelMakerScrollArea">
            <property name="geometry">
             <rect>
              <x>0</x>
@@ -1202,9 +1202,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <height>882</height>
             </rect>
            </property>
-           <layout class="QGridLayout" name="gridLayout_16">
+           <layout class="QGridLayout" name="gridLayout_18">
             <item row="0" column="0">
-             <layout class="QVBoxLayout" name="verticalLayout_14">
+             <layout class="QVBoxLayout" name="verticalLayout_15">
               <item>
                <widget class="QTextBrowser" name="txtbModelMaker">
                 <property name="minimumSize">
@@ -1352,7 +1352,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      <item>
                       <widget class="QCheckBox" name="cbVariableWaves">
                        <property name="enabled">
-                        <bool>false</bool>
+                        <bool>true</bool>
                        </property>
                        <property name="text">
                         <string>Use time-varying waves</string>
@@ -1663,7 +1663,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      <item>
                       <widget class="QLabel" name="lbTideTable">
                        <property name="text">
-                        <string>Tide table source</string>
+                        <string>Source layer</string>
                        </property>
                       </widget>
                      </item>
@@ -1855,7 +1855,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <bool>false</bool>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true"> QgsCollapsibleGroupBoxBasic { border: none; }QgsCollapsibleGroupBoxBasic::title, QgsCollapsibleGroupBox::title {  subcontrol-origin: margin;  subcontrol-position: top left;  margin-left: 20px;  margin-right: 5px;  left: 0px;  top: 1px;}QgsCollapsibleGroupBoxBasic::title, QgsCollapsibleGroupBox::title {  subcontrol-origin: margin;  subcontrol-position: top left;  margin-left: 20px;  margin-right: 5px;  left: 0px;  top: 1px;}QgsCollapsibleGroupBoxBasic::title, QgsCollapsibleGroupBox::title {  subcontrol-origin: margin;  subcontrol-position: top left;  margin-left: 20px;  margin-right: 5px;  left: 0px;  top: 1px;}QgsCollapsibleGroupBoxBasic::title, QgsCollapsibleGroupBox::title {  subcontrol-origin: margin;  subcontrol-position: top left;  margin-left: 20px;  margin-right: 5px;  left: 0px;  top: 1px;}</string>
+                 <string notr="true">QgsCollapsibleGroupBoxBasic::title, QgsCollapsibleGroupBox::title {  subcontrol-origin: margin;  subcontrol-position: top left;  margin-left: 20px;  margin-right: 5px;  left: 0px;  top: 1px;}QgsCollapsibleGroupBoxBasic::title, QgsCollapsibleGroupBox::title {  subcontrol-origin: margin;  subcontrol-position: top left;  margin-left: 20px;  margin-right: 5px;  left: 0px;  top: 1px;}QgsCollapsibleGroupBoxBasic::title, QgsCollapsibleGroupBox::title {  subcontrol-origin: margin;  subcontrol-position: top left;  margin-left: 20px;  margin-right: 5px;  left: 0px;  top: 1px;}QgsCollapsibleGroupBoxBasic::title, QgsCollapsibleGroupBox::title {  subcontrol-origin: margin;  subcontrol-position: top left;  margin-left: 20px;  margin-right: 5px;  left: 0px;  top: 1px;} QgsCollapsibleGroupBoxBasic { border: none; }</string>
                 </property>
                 <property name="title">
                  <string>Input time-varying waves</string>
@@ -1863,6 +1863,216 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="collapsed">
                  <bool>true</bool>
                 </property>
+                <layout class="QGridLayout" name="gridLayout_16">
+                 <item row="0" column="0">
+                  <layout class="QVBoxLayout" name="verticalLayout_14">
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_82">
+                     <item>
+                      <widget class="QgsMapLayerComboBox" name="mlcbWaveTable">
+                       <property name="minimumSize">
+                        <size>
+                         <width>177</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="lbWaveTable">
+                       <property name="text">
+                        <string>Source layer</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="horizontalSpacer_76">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>18</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_81">
+                     <item>
+                      <widget class="QComboBox" name="cbWaveDate">
+                       <property name="minimumSize">
+                        <size>
+                         <width>177</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="lbWaveDate">
+                       <property name="text">
+                        <string>Date column</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="horizontalSpacer_77">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>18</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_80">
+                     <item>
+                      <widget class="QComboBox" name="cbWaveTime">
+                       <property name="minimumSize">
+                        <size>
+                         <width>177</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="lbWaveTime">
+                       <property name="text">
+                        <string>Time column</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="horizontalSpacer_78">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>18</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_79">
+                     <item>
+                      <widget class="QComboBox" name="cbHeightColumn">
+                       <property name="minimumSize">
+                        <size>
+                         <width>177</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="lbWavHeight">
+                       <property name="text">
+                        <string>Height (m) col.</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="horizontalSpacer_79">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>18</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_78">
+                     <item>
+                      <widget class="QComboBox" name="cbPeriodColumn">
+                       <property name="minimumSize">
+                        <size>
+                         <width>177</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="lbWavPeriod">
+                       <property name="text">
+                        <string>Period (s) col.</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="horizontalSpacer_80">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>18</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_77">
+                     <item>
+                      <widget class="QComboBox" name="cbDirectionColumn">
+                       <property name="minimumSize">
+                        <size>
+                         <width>177</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="lbWavAngle">
+                       <property name="text">
+                        <string>From (°) col.</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="horizontalSpacer_81">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>18</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
                </widget>
               </item>
               <item>
