@@ -29,7 +29,7 @@ from .core.grid import calculate_grid, GridVisualizer
 from .core.raster import sample_raster_at_grid, sample_vector_at_grid, create_temp_raster, apply_viridis_renderer, robust_range, HAS_GDAL
 from .core.export import export_xbeach_model, load_grid_files
 from .core.netcdf import get_netcdf_info, read_netcdf_variable
-from .core.times import layer_elapsed_seconds, layer_tide_rows
+from .core.times import layer_tide_rows, layer_time_range, classify_overlap
 from .core.waveangle import layer_mean_direction
 from .core.compat import QGIS_INFO, QGIS_SUCCESS, QGIS_WARNING, load_ui_type
 
@@ -136,6 +136,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.visualizer = GridVisualizer(iface)
         self.var_map = {}
         self._durationCommitted = None
+        self._last_overlap_sig = None
         
         self.resetGrid()
         self.resetInputParams()
@@ -484,6 +485,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.qfwOptionalManning.setEnabled(checked)
 
     def onVariableTidesToggled(self, checked):
+        self._last_overlap_sig = None
         either_checked = checked or self.cbVariableWaves.isChecked()
         self.sbModelDuration.setEnabled(not either_checked)
         self.lbDuration.setEnabled(not either_checked)
@@ -517,19 +519,93 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     self.cbLeftTideColumn.addItem(field.name())
                     self.cbRightTideColumn.addItem(field.name())
 
+    def _active_table_ranges(self):
+        tide_range = None
+        if self.cbVariableTides.isChecked():
+            layer = self.mlcbTideTable.currentLayer()
+            date_field = self.cbDateColumn.currentText()
+            time_field = self.cbTimeColumn.currentText()
+            if layer and layer.isValid() and date_field and time_field:
+                tide_range = layer_time_range(layer, date_field, time_field)
+
+        wave_range = None
+        if self.cbVariableWaves.isChecked():
+            layer = self.mlcbWaveTable.currentLayer()
+            date_field = self.cbWaveDate.currentText()
+            time_field = self.cbWaveTime.currentText()
+            if layer and layer.isValid() and date_field and time_field:
+                wave_range = layer_time_range(layer, date_field, time_field)
+
+        return tide_range, wave_range
+
+    def _warn_no_overlap(self, tide_range, wave_range):
+        QtWidgets.QMessageBox.warning(
+            self, "No Overlap Between Tables",
+            f"Tide table: {tide_range[0]:%Y-%m-%d %H:%M:%S} to {tide_range[1]:%Y-%m-%d %H:%M:%S}\n"
+            f"Wave table: {wave_range[0]:%Y-%m-%d %H:%M:%S} to {wave_range[1]:%Y-%m-%d %H:%M:%S}\n\n"
+            "The tide and wave tables do not overlap in time. "
+            "Please choose different sources.")
+
+    def _warn_partial_overlap(self, tide_range, wave_range, start, end):
+        QtWidgets.QMessageBox.warning(
+            self, "Partial Overlap",
+            f"Tide table: {tide_range[0]:%Y-%m-%d %H:%M:%S} to {tide_range[1]:%Y-%m-%d %H:%M:%S}\n"
+            f"Wave table: {wave_range[0]:%Y-%m-%d %H:%M:%S} to {wave_range[1]:%Y-%m-%d %H:%M:%S}\n\n"
+            f"Only the overlapping period will be simulated "
+            f"({start:%Y-%m-%d %H:%M:%S} to {end:%Y-%m-%d %H:%M:%S}). "
+            "One or both series will be clipped at export.")
+
+    def _reconcile_time_tables(self):
+        tide_range, wave_range = self._active_table_ranges()
+
+        if tide_range and wave_range:
+            status, start, end = classify_overlap(tide_range, wave_range)
+            sig = (tide_range, wave_range)
+            if status == 'none':
+                if sig != self._last_overlap_sig:
+                    self._last_overlap_sig = sig
+                    self._warn_no_overlap(tide_range, wave_range)
+                return
+            if status == 'partial':
+                if sig != self._last_overlap_sig:
+                    self._last_overlap_sig = sig
+                    self._warn_partial_overlap(tide_range, wave_range, start, end)
+            self._last_overlap_sig = sig
+            duration = int(round((end - start).total_seconds()))
+        else:
+            single = tide_range or wave_range
+            if single is None:
+                return
+            duration = int(round((single[1] - single[0]).total_seconds()))
+
+        self.sbModelDuration.setValue(duration)
+        self.onModelDurationChanged(duration)
+
+    def _export_overlap_window(self):
+        """Re-check tide/wave overlap at export time.
+
+        Returns:
+            tuple: ``(blocked, window)`` — blocked is True (after
+            warning) when the active tables do not overlap; window is
+            ``(start, end)`` for a partial overlap, else None.
+        """
+        tide_range, wave_range = self._active_table_ranges()
+        if not (tide_range and wave_range):
+            return False, None
+
+        status, start, end = classify_overlap(tide_range, wave_range)
+        if status == 'none':
+            self._warn_no_overlap(tide_range, wave_range)
+            return True, None
+        if status == 'partial':
+            return False, (start, end)
+        return False, None
+
     def onTideColumnsChanged(self, index=0):
-        layer = self.mlcbTideTable.currentLayer()
-        date_field = self.cbDateColumn.currentText()
-        time_field = self.cbTimeColumn.currentText()
-        if not (layer and layer.isValid() and date_field and time_field):
-            return
-        seconds = layer_elapsed_seconds(layer, date_field, time_field)
-        if seconds is not None:
-            duration = int(round(seconds))
-            self.sbModelDuration.setValue(duration)
-            self.onModelDurationChanged(duration)
+        self._reconcile_time_tables()
 
     def onVariableWavesToggled(self, checked):
+        self._last_overlap_sig = None
         either_checked = checked or self.cbVariableTides.isChecked()
         self.sbModelDuration.setEnabled(not either_checked)
         self.lbDuration.setEnabled(not either_checked)
@@ -574,17 +650,10 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     self.cbDirectionColumn.addItem(field.name())
 
     def onWaveColumnsChanged(self, index=0):
-        layer = self.mlcbWaveTable.currentLayer()
-        date_field = self.cbWaveDate.currentText()
-        time_field = self.cbWaveTime.currentText()
-        if layer and layer.isValid() and date_field and time_field:
-            seconds = layer_elapsed_seconds(layer, date_field, time_field)
-            if seconds is not None:
-                duration = int(round(seconds))
-                self.sbModelDuration.setValue(duration)
-                self.onModelDurationChanged(duration)
+        self._reconcile_time_tables()
 
         if self.cbVariableWaves.isChecked():
+            layer = self.mlcbWaveTable.currentLayer()
             direction_field = self.cbDirectionColumn.currentText()
             if layer and layer.isValid() and direction_field:
                 mean_direction = layer_mean_direction(layer, direction_field)
@@ -791,9 +860,13 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     + "\n".join(f"- {name}" for name in missing_tide))
                 return
 
+            blocked, overlap_window = self._export_overlap_window()
+            if blocked:
+                return
+
             tide_rows = layer_tide_rows(
                 tide_layer, date_field, time_field, left_field,
-                right_field or None)
+                right_field or None, window=overlap_window)
             if not tide_rows:
                 QtWidgets.QMessageBox.warning(
                     self, "Invalid Tide Table",
