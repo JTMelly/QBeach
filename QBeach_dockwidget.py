@@ -30,6 +30,7 @@ from .core.raster import sample_raster_at_grid, sample_vector_at_grid, create_te
 from .core.export import export_xbeach_model, load_grid_files
 from .core.netcdf import get_netcdf_info, read_netcdf_variable
 from .core.times import layer_elapsed_seconds, layer_tide_rows
+from .core.waveangle import layer_mean_direction
 from .core.compat import QGIS_INFO, QGIS_SUCCESS, QGIS_WARNING, load_ui_type
 
 FORM_CLASS, _ = load_ui_type(os.path.join(
@@ -107,6 +108,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.mlcbWaveTable.layerChanged.connect(self.onWaveTableLayerChanged)
         self.cbWaveDate.currentIndexChanged.connect(self.onWaveColumnsChanged)
         self.cbWaveTime.currentIndexChanged.connect(self.onWaveColumnsChanged)
+        self.cbDirectionColumn.currentIndexChanged.connect(self.onWaveColumnsChanged)
         self.cbManningLayer.toggled.connect(self.onManningLayerToggled)
         self.cbManningDefaultOnly.toggled.connect(self.onManningDefaultOnlyToggled)
         self.cbNonErodibleLayer.toggled.connect(self.onNonErodibleLayerToggled)
@@ -115,7 +117,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.cbUseManning.toggled.connect(self.onUseManningToggled)
         self.cbUseNonErodible.toggled.connect(self.onUseNonErodibleToggled)
         self.cbUseSediments.toggled.connect(self.onUseSedimentsToggled)
-        self.sbModelDuration.valueChanged.connect(self.onModelDurationChanged)
+        self.sbModelDuration.editingFinished.connect(self._onDurationEditingFinished)
         self.cbVariableTides.toggled.connect(self.onVariableTidesToggled)
         self.cbVariableWaves.toggled.connect(self.onVariableWavesToggled)
 
@@ -133,6 +135,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         
         self.visualizer = GridVisualizer(iface)
         self.var_map = {}
+        self._durationCommitted = None
         
         self.resetGrid()
         self.resetInputParams()
@@ -153,6 +156,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.gbOutputModel.setCollapsed(True)
         self.resultsGroupBox.setCollapsed(True)
         self.cgbVariableTides.setCollapsed(True)
+        self.cgbVariableWaves.setCollapsed(True)
         self.tabQBeach.setCurrentIndex(0)
 
         # uncheck optional checkboxes
@@ -172,6 +176,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.mlcbNonErodibleSource.setLayer(None)
         self.mlcbSedimentSource.setLayer(None)
         self.mlcbTideTable.setLayer(None)
+        self.mlcbWaveTable.setLayer(None)
         self.cbManningHeading.clear()
 
         # clear file widgets
@@ -465,14 +470,23 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.leOtherMeans.clear()
 
     def onModelDurationChanged(self, value):
+        self._durationCommitted = value
         self.sbTimestep.setRange(1, max(1, int(value / 2)))
+        # ~10 total timesteps, rounded to the nearest 10 s
+        self.sbTimestep.setValue(max(1, int(round(value / 100.0)) * 10))
+
+    def _onDurationEditingFinished(self):
+        value = self.sbModelDuration.value()
+        if value != self._durationCommitted:
+            self.onModelDurationChanged(value)
 
     def onUseManningToggled(self, checked):
         self.qfwOptionalManning.setEnabled(checked)
 
     def onVariableTidesToggled(self, checked):
-        self.sbModelDuration.setEnabled(not checked)
-        self.lbDuration.setEnabled(not checked)
+        either_checked = checked or self.cbVariableWaves.isChecked()
+        self.sbModelDuration.setEnabled(not either_checked)
+        self.lbDuration.setEnabled(not either_checked)
         self.dsbTide.setEnabled(not checked)
         self.lbTide.setEnabled(not checked)
         self.cgbVariableTides.setEnabled(checked)
@@ -481,9 +495,10 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.dsbTide.setValue(DEFAULT_SETTINGS['tide'])
         else:
             self.mlcbTideTable.setLayer(None)
-            self.sbModelDuration.setValue(DEFAULT_SETTINGS['duration'])
-            self.onModelDurationChanged(self.sbModelDuration.value())
-            self.sbTimestep.setValue(DEFAULT_SETTINGS['timestep'])
+            if not self.cbVariableWaves.isChecked():
+                self.sbModelDuration.setValue(DEFAULT_SETTINGS['duration'])
+                self.onModelDurationChanged(self.sbModelDuration.value())
+                self.sbTimestep.setValue(DEFAULT_SETTINGS['timestep'])
             self.dsbTide.setValue(DEFAULT_SETTINGS['tide'])
             self.cgbVariableTides.setCollapsed(True)
 
@@ -512,61 +527,69 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if seconds is not None:
             duration = int(round(seconds))
             self.sbModelDuration.setValue(duration)
-            # ~10 total timesteps, rounded to the nearest 10 s
-            self.sbTimestep.setValue(max(1, int(round(duration / 100.0)) * 10))
+            self.onModelDurationChanged(duration)
 
     def onVariableWavesToggled(self, checked):
-                self.dsbWaveHeight.setEnabled(not checked)
-                self.lbWaveHeight.setEnabled(not checked)
-                self.dsbWavePeriod.setEnabled(not checked)
-                self.lbWavePeriod.setEnabled(not checked)
-                self.dsbWaveDirection.setEnabled(not checked)
-                self.lbWaveDirection.setEnabled(not checked)
-                self.cgbVariableWaves.setEnabled(checked)
-                if checked:
-                    self.cgbVariableWaves.setCollapsed(False)
-                    self.dsbWaveHeight.setValue(DEFAULT_SETTINGS['Hm0'])
-                    self.dsbWavePeriod.setValue(DEFAULT_SETTINGS['Tp'])
-                    self.dsbWaveDirection.setValue(DEFAULT_SETTINGS['mainAngle'])
-                else:
-                    self.mlcbWaveTable.setLayer(None)
-                    self.sbModelDuration.setValue(DEFAULT_SETTINGS['duration'])
-                    self.onModelDurationChanged(self.sbModelDuration.value())
-                    self.sbTimestep.setValue(DEFAULT_SETTINGS['timestep'])
-                    self.dsbWaveHeight.setValue(DEFAULT_SETTINGS['Hm0'])
-                    self.dsbWavePeriod.setValue(DEFAULT_SETTINGS['Tp'])
-                    self.dsbWaveDirection.setValue(DEFAULT_SETTINGS['mainAngle'])
-                    self.cgbVariableWaves.setCollapsed(True)
+        either_checked = checked or self.cbVariableTides.isChecked()
+        self.sbModelDuration.setEnabled(not either_checked)
+        self.lbDuration.setEnabled(not either_checked)
+        self.dsbWaveHeight.setEnabled(not checked)
+        self.lbWaveHeight.setEnabled(not checked)
+        self.dsbWavePeriod.setEnabled(not checked)
+        self.lbWavePeriod.setEnabled(not checked)
+        self.dsbWaveDirection.setEnabled(not checked)
+        self.lbWaveDirection.setEnabled(not checked)
+        self.cgbVariableWaves.setEnabled(checked)
+        if checked:
+            self.cgbVariableWaves.setCollapsed(False)
+            self.dsbWaveHeight.setValue(DEFAULT_SETTINGS['Hm0'])
+            self.dsbWavePeriod.setValue(DEFAULT_SETTINGS['Tp'])
+            self.dsbWaveDirection.setValue(DEFAULT_SETTINGS['mainAngle'])
+        else:
+            self.mlcbWaveTable.setLayer(None)
+            if not self.cbVariableTides.isChecked():
+                self.sbModelDuration.setValue(DEFAULT_SETTINGS['duration'])
+                self.onModelDurationChanged(self.sbModelDuration.value())
+                self.sbTimestep.setValue(DEFAULT_SETTINGS['timestep'])
+            self.dsbWaveHeight.setValue(DEFAULT_SETTINGS['Hm0'])
+            self.dsbWavePeriod.setValue(DEFAULT_SETTINGS['Tp'])
+            self.dsbWaveDirection.setValue(DEFAULT_SETTINGS['mainAngle'])
+            self.cgbVariableWaves.setCollapsed(True)
 
     def onWaveTableLayerChanged(self, layer):
-            self.cbWaveDate.clear()
-            self.cbWaveTime.clear()
-            self.cbHeightColumn.clear()
-            self.cbPeriodColumn.clear()
-            self.cbDirectionColumn.clear()
-            if layer and layer.isValid():
-                for field in layer.fields():
-                    if field.type() == QVariant.Date:
-                        self.cbWaveDate.addItem(field.name())
-                    if field.type() == QVariant.Time:
-                        self.cbWaveTime.addItem(field.name())
-                    if field.isNumeric():
-                        self.cbHeightColumn.addItem(field.name())
-                        self.cbPeriodColumn.addItem(field.name())
-                        self.cbDirectionColumn.addItem(field.name())
-    
+        self.cbWaveDate.clear()
+        self.cbWaveTime.clear()
+        self.cbHeightColumn.clear()
+        self.cbPeriodColumn.clear()
+        self.cbDirectionColumn.clear()
+        if layer and layer.isValid():
+            for field in layer.fields():
+                if field.type() == QVariant.Date:
+                    self.cbWaveDate.addItem(field.name())
+                if field.type() == QVariant.Time:
+                    self.cbWaveTime.addItem(field.name())
+                if field.isNumeric():
+                    self.cbHeightColumn.addItem(field.name())
+                    self.cbPeriodColumn.addItem(field.name())
+                    self.cbDirectionColumn.addItem(field.name())
+
     def onWaveColumnsChanged(self, index=0):
-            layer = self.mlcbWaveTable.currentLayer()
-            date_field = self.cbWaveDate.currentText()
-            time_field = self.cbWaveTime.currentText()
-            if not (layer and layer.isValid() and date_field and time_field):
-                return
+        layer = self.mlcbWaveTable.currentLayer()
+        date_field = self.cbWaveDate.currentText()
+        time_field = self.cbWaveTime.currentText()
+        if layer and layer.isValid() and date_field and time_field:
             seconds = layer_elapsed_seconds(layer, date_field, time_field)
             if seconds is not None:
                 duration = int(round(seconds))
                 self.sbModelDuration.setValue(duration)
-                # ~10 total timesteps, rounded to the nearest 10 s
-                self.sbTimestep.setValue(max(1, int(round(duration / 100.0)) * 10))
+                self.onModelDurationChanged(duration)
+
+        if self.cbVariableWaves.isChecked():
+            direction_field = self.cbDirectionColumn.currentText()
+            if layer and layer.isValid() and direction_field:
+                mean_direction = layer_mean_direction(layer, direction_field)
+                if mean_direction is not None:
+                    self.dsbWaveDirection.setValue(mean_direction)
 
     def onUseNonErodibleToggled(self, checked):
         self.qfwOptionalNonErodible.setEnabled(checked)
