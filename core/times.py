@@ -74,6 +74,69 @@ def layer_elapsed_seconds(layer, date_field, time_field):
     return elapsed_seconds(dates, times)
 
 
+def layer_tide_rows(layer, date_field, time_field, left_field, right_field=None):
+    """Read a tide table layer and return elapsed-time rows for XBeach.
+
+    Combines each feature's date and time fields into a datetime,
+    converts the tide corner fields to floats, sorts by time, and
+    expresses each timestamp as elapsed seconds from the earliest
+    valid row. Rows with unusable date, time, or left-tide values are
+    skipped. When ``right_field`` is omitted or a right value is
+    unusable, the left value is reused for the right corner (per the
+    XBeach two-corner convention, facing shore).
+
+    Args:
+        layer (QgsVectorLayer): The table/vector layer to read from.
+        date_field (str): Name of the date field.
+        time_field (str): Name of the time field.
+        left_field (str): Name of the left-corner tide field.
+        right_field (str, optional): Name of the right-corner tide
+            field. May be empty/None to mirror the left values.
+
+    Returns:
+        list or None: ``[(elapsed_seconds, left, right), ...]`` sorted
+        by elapsed time, or None if the field names are invalid or
+        fewer than two rows are usable.
+    """
+
+    fields = layer.fields()
+    date_idx = fields.indexFromName(date_field)
+    time_idx = fields.indexFromName(time_field)
+    left_idx = fields.indexFromName(left_field)
+    if date_idx < 0 or time_idx < 0 or left_idx < 0:
+        return None
+
+    right_idx = fields.indexFromName(right_field) if right_field else -1
+
+    indices = [date_idx, time_idx, left_idx]
+    if right_idx >= 0:
+        indices.append(right_idx)
+    request = QgsFeatureRequest().setSubsetOfAttributes(indices)
+
+    rows = []
+    for feature in layer.getFeatures(request):
+        try:
+            dt = datetime.combine(_as_date(feature[date_idx]),
+                                  _as_time(feature[time_idx]))
+            left = float(feature[left_idx])
+        except (AttributeError, TypeError, ValueError):
+            continue
+        right = left
+        if right_idx >= 0:
+            try:
+                right = float(feature[right_idx])
+            except (AttributeError, TypeError, ValueError):
+                pass
+        rows.append((dt, left, right))
+
+    if len(rows) < 2:
+        return None
+
+    rows.sort(key=lambda row: row[0])
+    t0 = rows[0][0]
+    return [((dt - t0).total_seconds(), left, right) for dt, left, right in rows]
+
+
 def _as_date(value):
     """Normalize a field value to ``datetime.date``.
 

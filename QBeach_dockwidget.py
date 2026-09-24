@@ -29,7 +29,7 @@ from .core.grid import calculate_grid, GridVisualizer
 from .core.raster import sample_raster_at_grid, sample_vector_at_grid, create_temp_raster, apply_viridis_renderer, robust_range, HAS_GDAL
 from .core.export import export_xbeach_model, load_grid_files
 from .core.netcdf import get_netcdf_info, read_netcdf_variable
-from .core.times import layer_elapsed_seconds
+from .core.times import layer_elapsed_seconds, layer_tide_rows
 from .core.compat import QGIS_INFO, QGIS_SUCCESS, QGIS_WARNING, load_ui_type
 
 FORM_CLASS, _ = load_ui_type(os.path.join(
@@ -682,8 +682,43 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 + "\n".join(f"- {name}" for name in missing_optional))
             return
 
+        # time-varying tides: validate selections and build tide rows
+        tide_rows = None
+        if self.cbVariableTides.isChecked():
+            tide_layer = self.mlcbTideTable.currentLayer()
+            date_field = self.cbDateColumn.currentText()
+            time_field = self.cbTimeColumn.currentText()
+            left_field = self.cbLeftTideColumn.currentText()
+            right_field = self.cbRightTideColumn.currentText()
+
+            missing_tide = []
+            if not (tide_layer and tide_layer.isValid()):
+                missing_tide.append("Tide table layer")
+            if not date_field:
+                missing_tide.append("Date column")
+            if not time_field:
+                missing_tide.append("Time column")
+            if not left_field:
+                missing_tide.append("Left tide column")
+            if missing_tide:
+                QtWidgets.QMessageBox.warning(
+                    self, "Missing Tide Table Settings",
+                    "The following time-varying tide settings are incomplete:\n"
+                    + "\n".join(f"- {name}" for name in missing_tide))
+                return
+
+            tide_rows = layer_tide_rows(
+                tide_layer, date_field, time_field, left_field,
+                right_field or None)
+            if not tide_rows:
+                QtWidgets.QMessageBox.warning(
+                    self, "Invalid Tide Table",
+                    "The selected tide table must contain at least two valid rows "
+                    "with usable date, time, and tide values.")
+                return
+
         try:
-            export_xbeach_model(output_dir, params_template, p2)
+            export_xbeach_model(output_dir, params_template, p2, tide_rows=tide_rows)
 
             self.iface.messageBar().pushMessage(
                 "Working on it:", 
