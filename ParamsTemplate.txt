@@ -46,7 +46,8 @@ back         = abs_2d
 
 
 # Tide ##############################
-tideloc      = 1
+tideloc      = 2
+paulrevere   = sea
 zs0file      = tide.txt
 
 

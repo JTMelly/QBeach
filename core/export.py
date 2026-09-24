@@ -18,12 +18,8 @@ def export_xbeach_model(output_dir, template_path, p2, tide_rows=None):
             alfa, nx, ny, nglobalvar, global_vars, nmeanvar, mean_vars,
             bedfriction, sedimentation).
         tide_rows (list, optional): ``[(elapsed_seconds, left, right),
-            ...]`` time-varying tide series. When provided, tide.txt is
-            written as a space-delimited three-column table (elapsed
-            time, left corner, right corner), with a final row at
-            ``duration + 1`` repeating the last levels. When None, the
-            default two-line constant tide file from ``p2['tide']`` is
-            written.
+            ...]`` time-varying tide series, where left/right are the
+            offshore domain corners facing shore.
     """
 
     with open(template_path, 'r', encoding='utf-8') as pt:
@@ -35,15 +31,15 @@ def export_xbeach_model(output_dir, template_path, p2, tide_rows=None):
     
     with open(tideFilePath, 'w') as f:
         if tide_rows:
-            lines = [f"{elapsed:.1f} {left:.3f} {right:.3f}"
+            lines = [f"{elapsed:.1f} {right:.3f} {left:.3f}"
                      for elapsed, left, right in tide_rows]
             final_elapsed = float(p2['duration']) + 1
             if final_elapsed > tide_rows[-1][0]:
                 _, last_left, last_right = tide_rows[-1]
-                lines.append(f"{final_elapsed:.1f} {last_left:.3f} {last_right:.3f}")
+                lines.append(f"{final_elapsed:.1f} {last_right:.3f} {last_left:.3f}")
             f.write("\n".join(lines))
         else:
-            f.write(f"0 {p2['tide']}\n{p2['duration']+1} {p2['tide']}")
+            f.write(f"0 {p2['tide']} {p2['tide']}\n{p2['duration']+1} {p2['tide']} {p2['tide']}")
         
     with open(jonsFilePath, 'w') as f2:
         f2.write(f"{p2['Hm0']} {p2['Tp']} {p2['mainAngle']} {p2['gammajsp']} {p2['spread']} {p2['duration']+1} 1")

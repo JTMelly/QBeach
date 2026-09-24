@@ -42,7 +42,8 @@ sedtrans     = 0
 
 
 # Tide ##############################
-tideloc      = 1
+tideloc      = 2
+paulrevere   = sea
 zs0file      = tide.txt
 
 
