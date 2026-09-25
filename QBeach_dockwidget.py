@@ -29,7 +29,7 @@ from .core.grid import calculate_grid, GridVisualizer
 from .core.raster import sample_raster_at_grid, sample_vector_at_grid, create_temp_raster, apply_viridis_renderer, robust_range, HAS_GDAL
 from .core.export import export_xbeach_model, load_grid_files
 from .core.netcdf import get_netcdf_info, read_netcdf_variable
-from .core.times import layer_tide_rows, layer_time_range, classify_overlap
+from .core.times import layer_tide_rows, layer_wave_rows, layer_time_range, classify_overlap
 from .core.waveangle import layer_mean_direction
 from .core.compat import QGIS_INFO, QGIS_SUCCESS, QGIS_WARNING, load_ui_type
 
@@ -84,7 +84,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.fwSetwd2.setStorageMode(QgsFileWidget.GetDirectory)
         self.fwSetwdBB2.setStorageMode(QgsFileWidget.GetDirectory)
 
-        # connect button clicks
+        # connect UI actions
         self.pbCancelBathy.clicked.connect(self.close)
         self.pbCancelModel.clicked.connect(self.close)
         self.pbCancelRW.clicked.connect(self.close)
@@ -540,19 +540,18 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def _warn_no_overlap(self, tide_range, wave_range):
         QtWidgets.QMessageBox.warning(
-            self, "No Overlap Between Tables",
-            f"Tide table: {tide_range[0]:%Y-%m-%d %H:%M:%S} to {tide_range[1]:%Y-%m-%d %H:%M:%S}\n"
-            f"Wave table: {wave_range[0]:%Y-%m-%d %H:%M:%S} to {wave_range[1]:%Y-%m-%d %H:%M:%S}\n\n"
-            "The tide and wave tables do not overlap in time. "
-            "Please choose different sources.")
+            self, "No time overlap",
+            f"Tide series: {tide_range[0]:%Y-%m-%d %H:%M:%S} to {tide_range[1]:%Y-%m-%d %H:%M:%S}\n"
+            f"Wave series: {wave_range[0]:%Y-%m-%d %H:%M:%S} to {wave_range[1]:%Y-%m-%d %H:%M:%S}\n\n"
+            "The tide and wave series do not overlap in time. Please choose different sources.")
 
     def _warn_partial_overlap(self, tide_range, wave_range, start, end):
         QtWidgets.QMessageBox.warning(
-            self, "Partial Overlap",
-            f"Tide table: {tide_range[0]:%Y-%m-%d %H:%M:%S} to {tide_range[1]:%Y-%m-%d %H:%M:%S}\n"
-            f"Wave table: {wave_range[0]:%Y-%m-%d %H:%M:%S} to {wave_range[1]:%Y-%m-%d %H:%M:%S}\n\n"
-            f"Only the overlapping period will be simulated "
-            f"({start:%Y-%m-%d %H:%M:%S} to {end:%Y-%m-%d %H:%M:%S}). "
+            self, "Partial time overlap",
+            f"Tide series: {tide_range[0]:%Y-%m-%d %H:%M:%S} to {tide_range[1]:%Y-%m-%d %H:%M:%S}\n"
+            f"Wave series: {wave_range[0]:%Y-%m-%d %H:%M:%S} to {wave_range[1]:%Y-%m-%d %H:%M:%S}\n\n"
+            f"Only the overlapping period will be simulated:\n"
+            f"{start:%Y-%m-%d %H:%M:%S} to {end:%Y-%m-%d %H:%M:%S}.\n\n"
             "One or both series will be clipped at export.")
 
     def _reconcile_time_tables(self):
@@ -874,8 +873,53 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     "with usable date, time, and tide values.")
                 return
 
+        # time-varying waves: validate selections and build sea-state rows
+        wave_rows = None
+        if self.cbVariableWaves.isChecked():
+            wave_layer = self.mlcbWaveTable.currentLayer()
+            wave_date_field = self.cbWaveDate.currentText()
+            wave_time_field = self.cbWaveTime.currentText()
+            height_field = self.cbHeightColumn.currentText()
+            period_field = self.cbPeriodColumn.currentText()
+            direction_field = self.cbDirectionColumn.currentText()
+
+            missing_wave = []
+            if not (wave_layer and wave_layer.isValid()):
+                missing_wave.append("Wave table layer")
+            if not wave_date_field:
+                missing_wave.append("Date column")
+            if not wave_time_field:
+                missing_wave.append("Time column")
+            if not height_field:
+                missing_wave.append("Wave height column")
+            if not period_field:
+                missing_wave.append("Wave period column")
+            if not direction_field:
+                missing_wave.append("Wave direction column")
+            if missing_wave:
+                QtWidgets.QMessageBox.warning(
+                    self, "Missing Wave Table Settings",
+                    "The following time-varying wave settings are incomplete:\n"
+                    + "\n".join(f"- {name}" for name in missing_wave))
+                return
+
+            blocked, overlap_window = self._export_overlap_window()
+            if blocked:
+                return
+
+            wave_rows = layer_wave_rows(
+                wave_layer, wave_date_field, wave_time_field, height_field,
+                period_field, direction_field, window=overlap_window)
+            if not wave_rows:
+                QtWidgets.QMessageBox.warning(
+                    self, "Invalid Wave Table",
+                    "The selected wave table must contain at least two valid rows "
+                    "with usable date, time, height, period, and direction values.")
+                return
+
         try:
-            export_xbeach_model(output_dir, params_template, p2, tide_rows=tide_rows)
+            export_xbeach_model(output_dir, params_template, p2,
+                                tide_rows=tide_rows, wave_rows=wave_rows)
 
             self.iface.messageBar().pushMessage(
                 "Working on it:", 

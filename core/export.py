@@ -2,7 +2,8 @@
 import os
 import numpy as np
 
-def export_xbeach_model(output_dir, template_path, p2, tide_rows=None):
+def export_xbeach_model(output_dir, template_path, p2, tide_rows=None,
+                        wave_rows=None):
     """Write tide.txt, jonswap.txt, and params.txt for an XBeach model.
 
     Reads the params template, substitutes placeholder values from the
@@ -20,6 +21,9 @@ def export_xbeach_model(output_dir, template_path, p2, tide_rows=None):
         tide_rows (list, optional): ``[(elapsed_seconds, left, right),
             ...]`` time-varying tide series, where left/right are the
             offshore domain corners facing shore.
+        wave_rows (list, optional): ``[(elapsed_seconds, Hm0, Tp,
+            mainang), ...]`` time-varying sea states. When None, a
+            single constant sea state is written instead.
     """
 
     with open(template_path, 'r', encoding='utf-8') as pt:
@@ -42,16 +46,49 @@ def export_xbeach_model(output_dir, template_path, p2, tide_rows=None):
             f.write(f"0 {p2['tide']} {p2['tide']}\n{p2['duration']+1} {p2['tide']} {p2['tide']}")
         
     with open(jonsFilePath, 'w') as f2:
-        f2.write(f"{p2['Hm0']} {p2['Tp']} {p2['mainAngle']} {p2['gammajsp']} {p2['spread']} {p2['duration']+1} 1")
+        if wave_rows:
+            f2.write(_jonswap_text(wave_rows, p2))
+        else:
+            f2.write(f"{p2['Hm0']} {p2['Tp']} {p2['mainAngle']} {p2['gammajsp']} {p2['spread']} {p2['duration']+1} 1")
         
     with open(paramsFilePath, 'w') as f3:
         f3.write(template_content.format(**p2))
 
+
+def _jonswap_text(wave_rows, p2):
+    """Format a time-varying jonswap.txt body.
+
+    Args:
+        wave_rows (list): ``[(elapsed_seconds, Hm0, Tp, mainang), ...]``
+            sorted by elapsed time, with the first row at elapsed 0.
+        p2 (dict): Model parameters dictionary; ``duration``,
+            ``gammajsp`` and ``spread`` are used.
+
+    Returns:
+        str: Space-delimited sea-state lines, one per row, in
+        ``Hm0 Tp mainang gammajsp s duration dtbc`` column order.
+    """
+
+    tstop = int(p2['duration']) + 1
+
+    marks = []
+    for index, (elapsed, hm0, period, mainang) in enumerate(wave_rows):
+        mark = 0 if index == 0 else int(round(elapsed))
+        if marks and mark <= marks[-1][0]:
+            continue
+        if mark >= tstop:
+            continue
+        marks.append((mark, hm0, period, mainang))
+
+    lines = []
+    for index, (mark, hm0, period, mainang) in enumerate(marks):
+        end = marks[index + 1][0] if index + 1 < len(marks) else tstop
+        lines.append(f"{hm0} {period} {mainang} {p2['gammajsp']} "
+                     f"{p2['spread']} {end - mark} 1")
+    return "\n".join(lines)
+
 def load_grid_files(path_x, path_y, path_z):
     """Load XBeach grid and depth files from disk.
-
-    Reads the three ASCII files produced by the BathyBuilder export
-    into NumPy arrays.
 
     Args:
         path_x (str): Path to x.grd (Easting grid).

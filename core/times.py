@@ -170,6 +170,52 @@ def classify_overlap(range_a, range_b):
     return 'partial', start, end
 
 
+def _clip_rows(rows, window):
+    """Clip sorted ``(datetime, ...)`` rows to a window with a bracket row.
+
+    Args:
+        rows (list): Rows sorted by their leading datetime.
+        window (tuple, optional): ``(start, end)`` absolute datetimes.
+
+    Returns:
+        tuple: ``(kept, t0)`` where kept holds the rows to simulate and
+        ``t0`` is the datetime elapsed times are measured from, or
+        ``(None, None)`` when fewer than two rows survive.
+    """
+
+    if window is None:
+        return rows, rows[0][0]
+
+    w0, w1 = window
+    inside = [r for r in rows if w0 <= r[0] <= w1]
+    before = [r for r in rows if r[0] < w0]
+    if inside and before and inside[0][0] == w0:
+        kept = inside
+    elif before:
+        kept = [before[-1]] + inside
+    else:
+        kept = inside
+    if len(kept) < 2:
+        return None, None
+    return kept, w0
+
+
+def _rezero(kept, t0):
+    """Convert kept rows to elapsed seconds, holding the first at zero.
+
+    Args:
+        kept (list): ``(datetime, value, ...)`` rows.
+        t0 (datetime): Reference datetime (window start).
+
+    Returns:
+        list: ``[(0.0, value, ...), (elapsed_seconds, value, ...)]``.
+    """
+
+    out = [((row[0] - t0).total_seconds(),) + row[1:] for row in kept]
+    out[0] = (0.0,) + out[0][1:]
+    return out
+
+
 def layer_tide_rows(layer, date_field, time_field, left_field,
                     right_field=None, window=None):
     """Read a tide table layer and return elapsed-time rows for XBeach.
@@ -229,29 +275,71 @@ def layer_tide_rows(layer, date_field, time_field, left_field,
 
     rows.sort(key=lambda row: row[0])
 
-    if window is not None:
-        w0, w1 = window
-        inside = [r for r in rows if w0 <= r[0] <= w1]
-        before = [r for r in rows if r[0] < w0]
-        if inside and before and inside[0][0] == w0:
-            # a row exactly on the window start supersedes the bracket
-            kept = inside
-        elif before:
-            kept = [before[-1]] + inside
-        else:
-            kept = inside
-        if len(kept) < 2:
-            return None
-        t0 = w0
-    else:
-        kept = rows
-        t0 = rows[0][0]
+    kept, t0 = _clip_rows(rows, window)
+    if kept is None:
+        return None
 
-    out = [((dt - t0).total_seconds(), left, right) for dt, left, right in kept]
-    # hold the first kept value back to the window start (no-op for
-    # the bracket/exact-start cases, closes any leading gap)
-    out[0] = (0.0, out[0][1], out[0][2])
-    return out
+    return _rezero(kept, t0)
+
+
+def layer_wave_rows(layer, date_field, time_field, height_field,
+                    period_field, direction_field, window=None):
+    """Read a wave table layer and return sea states for XBeach.
+
+    Args:
+        layer (QgsVectorLayer): The table/vector layer to read from.
+        date_field (str): Name of the date field.
+        time_field (str): Name of the time field.
+        height_field (str): Name of the significant wave height field.
+        period_field (str): Name of the peak wave period field.
+        direction_field (str): Name of the mean wave direction field
+            (degrees, nautical convention).
+        window (tuple, optional): ``(start, end)`` absolute datetimes
+            clipping the series, with the same bracket-and-re-zero
+            semantics as ``layer_tide_rows``. ``None`` reads the full
+            series relative to its own first row.
+
+    Returns:
+        list or None: ``[(elapsed_seconds, Hm0, Tp, mainang), ...]``
+        sorted by elapsed time, or None if any field name is invalid
+        or fewer than two rows are usable.
+    """
+
+    fields = layer.fields()
+    date_idx = fields.indexFromName(date_field)
+    time_idx = fields.indexFromName(time_field)
+    height_idx = fields.indexFromName(height_field)
+    period_idx = fields.indexFromName(period_field)
+    direction_idx = fields.indexFromName(direction_field)
+    if date_idx < 0 or time_idx < 0 or height_idx < 0 \
+            or period_idx < 0 or direction_idx < 0:
+        return None
+
+    indices = [date_idx, time_idx, height_idx, period_idx, direction_idx]
+    request = QgsFeatureRequest().setSubsetOfAttributes(indices)
+
+    rows = []
+    for feature in layer.getFeatures(request):
+        try:
+            dt = datetime.combine(_as_date(feature[date_idx]),
+                                  _as_time(feature[time_idx]))
+            hm0 = float(feature[height_idx])
+            period = float(feature[period_idx])
+            mainang = float(feature[direction_idx])
+        except (AttributeError, TypeError, ValueError):
+            continue
+        rows.append((dt, hm0, period, mainang))
+
+    if len(rows) < 2:
+        return None
+
+    rows.sort(key=lambda row: row[0])
+
+    kept, t0 = _clip_rows(rows, window)
+    if kept is None:
+        return None
+
+    return _rezero(kept, t0)
 
 
 def _as_date(value):
