@@ -16,6 +16,8 @@ user-history.db
 # OS generated files
 .DS_Store
 thumbs.db
+Thumbs.db
+*.tmp
 desktop.ini
 
 # IDEs and editors
@@ -28,3 +30,18 @@ desktop.ini
 *.bak
 user.bak
 resources.qrc
+
+# Sphinx & Documentation Build Files
+docs/build/
+docs/source/_build/
+.doctrees/
+
+# Environments & System Info
+
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter / IPython checkpoints
+.ipynb_checkpoints/
