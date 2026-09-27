@@ -64,14 +64,14 @@ After running an XBeach model, as described below, bring ```xboutput.nc``` back 
 
 After using *ModelMaker* to generate a model, the following files should all exist in the same directory:
 
-* params.txt
-* tide.txt
-* jonswap.txt
-* x.grd
-* y.grd
-* bed.dep
-* manning.dep (optional)
-* nonerodible.dep (optional)
+-   params.txt
+-   tide.txt
+-   jonswap.txt
+-   x.grd
+-   y.grd
+-   bed.dep
+-   manning.dep (optional)
+-   nonerodible.dep (optional)
 
 It's time to head on over to a *Windows* computer to run *XBeach*. This is probably the quickest way to get a model running with a precompiled build, though it's also possible to compile *XBeach* from source to run on *Linux* machines. Get the [XBeach model](https://www.deltares.nl/en/software-and-data/products/xbeach) itself from *Deltares* and add all of its files to the working directory. Now, the full file list should look like this:
 
