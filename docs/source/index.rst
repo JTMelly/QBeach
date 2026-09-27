@@ -13,29 +13,29 @@ QBeach documentation
    :maxdepth: 2
    :caption: Getting Started
 
-   requirements
-   installation
+   gettingstarted/requirements
+   gettingstarted/installation
 
 .. toctree::
    :maxdepth: 2
    :caption: QBeach User Guide
 
-   tutorials/bathybuilder
-   tutorials/modelmaker
-   tutorials/resultswrangler
+   userguide/bathybuilder
+   userguide/modelmaker
+   userguide/resultswrangler
 
 .. toctree::
    :maxdepth: 2
    :caption: Run a Model
 
-   launchxbeach/launchxbeach
+   runamodel/launchxbeach
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Project Info
 
-   changelog
-   contributing
+   projectinfo/changelog
+   projectinfo/contributing
 
 Indices and tables
 ==================
