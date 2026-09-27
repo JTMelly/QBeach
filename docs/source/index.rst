@@ -5,27 +5,30 @@ QBeach documentation
 .. image:: https://img.shields.io/badge/status-active-brightgreen.svg
    :alt: Project Status
 
-Welcome to the official documentation for **QBeach**. This site covers everything from quick installation to detailed API specifications.
+**QBeach** doumentation: Create *XBeach* models the pointy-clicky way within a familiar *QGIS* workspace.
+
+*XBeach* is a numerical model that simulates ocean waves and coastal erosion/sedimentation processes, available from `Deltares <https://oss.deltares.nl/web/xbeach/>`_. *QGIS* is software for working with geographic information systems, available from `qgis.org <https://www.qgis.org/>`_. *QBeach* is a plugin for *QGIS*, used to quickly produce simple, working *XBeach* models.
 
 .. toctree::
    :maxdepth: 2
    :caption: Getting Started
 
+   requirements
    installation
-   quickstart
 
 .. toctree::
    :maxdepth: 2
-   :caption: User Guide
+   :caption: QBeach User Guide
 
-   tutorials/basic_usage
-   tutorials/advanced
+   tutorials/bathybuilder
+   tutorials/modelmaker
+   tutorials/resultswrangler
 
 .. toctree::
    :maxdepth: 2
-   :caption: API Reference
+   :caption: Run a Model
 
-   api/modules
+   launchxbeach/launchxbeach
 
 .. toctree::
    :maxdepth: 1

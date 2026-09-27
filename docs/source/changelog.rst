@@ -2,28 +2,18 @@
 Changelog
 ============
 
-Requirements
-------------
+This project began as a loose collection of *Python* scripts used to setup, run, and evaluate *XBeach* models in *Jupyter Notebooks*, *Google Colabs*, or an IDE:
 
-* Python 3.9+
-* Dependencies: NumPy, Pandas
+* `CaorleCruscotto <https://github.com/JTMelly/CaorleCruscotto>`_
+* `XBeach Utilities <https://github.com/JTMelly/XBeach-utils>`_
 
-Installing via Pip
-------------------
+*QBeach* is an attempt to make these tools more accessible to those likely already working in *QGIS* to produce the necessary inputs for a working *XBeach* model.
 
-To install the latest release, run:
+Changelog=0.1.0 (Initial beta release)
+--------------------------------------
 
-.. code-block:: bash
-
-   pip install my-package
-
-Installing from Source
-----------------------
-
-Clone the repository and install in editable mode:
-
-.. code-block:: bash
-
-   git clone https://github.com/yourusername/my-project.git
-   cd my-project
-   pip install -e .
+* QGIS righthand docking pane. 
+* Draws regular grids using rubber bands.
+* Extracts elevation (depth) data from raster layer to grid cells.
+* Creates simple XBeach model x.grd, y.grd, bed.dep, params.txt, jonswap.txt, and tide.txt files.
+* Plots variable at timestep from xboutput.nc.
