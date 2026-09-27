@@ -1,14 +1,17 @@
 # QBeach
-Set up and create *XBeach* models the pointy-clicky way within a familiar *QGIS* workspace.
+Create *XBeach* models the pointy-clicky way within a familiar *QGIS* workspace.
 
-## Notes
+## Documentation
+Find complete *QBeach* documentation at [readthedocs](https://qbeach.readthedocs.io/en/latest/#).
+
+## September 2026 update
+
+Just added variable tides and waves! Now it is possible to load tide and wave tables into a *QGIS* project and *QBeach* can use them to set up simulations. *Qbeach* also now accepts optional ```*.dep``` files when using *ModelMaker*. 
+
+## Introduction
 *QBeach* is under development and not yet available through the *QGIS* Plugins repository. Ideally, with some further debugging and documentation it should be submitted for consideration in the near future. 
 
-The quickest way to get up and running should be to download the zipped repository (green "code" button) then use *Plugins > Manage and Install Plugins... > Install from ZIP* in QGIS.
-
-Alternatively, clone this repository then point the *QGIS* user profile plugins folder to its location using a symlink.
-
-Remember, executing experimental software locally carries inherent risks. Have a look at the code and decide if it's worth trying or better to wait for a release.
+The quickest way to get up and running should be to download the zipped repository (green "code" button, upper right) then use *Plugins > Manage and Install Plugins... > Install from ZIP* in QGIS. Alternatively, clone this repository then point the *QGIS* user profile plugins folder to its location using a symlink. Remember, executing experimental software locally carries inherent risks. Have a look at the code and decide if it's worth trying or better to wait for a release.
 
 This project was inspired by:
 -   https://github.com/Alerovere/CoastalHydrodynamics
@@ -21,48 +24,61 @@ Individual Python-based tools were first gathered here before implementing in QB
 
 Various free [OpenCode](https://github.com/anomalyco/opencode/tree/v2) agents were used at multiple stages of this project, especially when generating docstrings, refactoring core functions, and planning UI logic.
 
-## Tutorial
-The following tutorial makes use of the sample files found in ```ExampleData/```. Approximately 10 minutes of 1 m waves were simulated on the southwest coast of the imaginary Isle of Miciocristo in the Tuscan Archipelago.
+## Usage
+The below examples make use of the sample files found in ```ExampleData/```. Approximately 10 minutes of 1 m waves were simulated on the southwest coast of the imaginary Isle of Miciocristo in the Tuscan Archipelago.
 
-### Bathymetry
-Load the provided ```ExampleData/TopoBathyData.tif``` raster into a *QGIS* project. This file will not be part of the final XBeach model, but *QBeach* needs to sample the information it contains to generate an *XBeach* model bathymetry grid (```*.grd``` and ```*.dep``` files). Set the project coordinate reference system to UTM 32N (EPSG:32632). It is important to work in appropriate UTM coordinates for your study site as measurements in meters make it possible to move between "*XBeach* model space" and "real world space". Launch *QBeach* and use *BathyBuilder* following the steps summarized in the image below:
+### BathyBuilder
 
 -   Rotate, extend, choose grid resolution, and translate model origin coordinates. Click *Apply* to view changes. *Reset* will clear the screen, set the origin to the center of the map canvas, and return the inputs to their initial settings.
 -   Select a raster layer containing elevation data from the active project.
 -   Select the path to a directory where model files will be saved.
 -   Export model files. ```x.grd```, ```y.grd```, and ```bed.dep``` files will be created in the specified directory.
--   To check what was created, provide the paths to these files and plot.
+-   **NEW**: Make optional ```*.dep``` files.
 
-![Create bathymetry grid](./Screenshots/BathyBuilder.png)
+![Create bathymetry grid](./Screenshots/drawGrid.png)
 
-### Boundary conditions
-Input basic model boundary conditions and generate the remaining *XBeach* model files using *QBeach ModelMaker*.
+### ModelMaker
 
 -   Select simulation duration, tide level, and offshore wave boundary conditions.
+-   **NEW**: use tide and wave tables to simulate time-varying tides and waves.
 -   Point *QBeach* toward the ```*.grd``` and ```*.dep``` files created previously.
 -   Choose an output path.
 -   *Export* will save a ```params.txt``` file, a ```jonswap.txt``` file, and a ```tide.txt``` file at the above path. These are model input parameters, spectral wave conditions, and a tide table, respectively.
 
-![Export model](./Screenshots/ExportModel.png)
+![Export model](./Screenshots/generateModel.png)
 
-At this point, the following files should all exist in the same directory:
+### ResultsWrangler
 
-![Files list](./Screenshots/FilesList.png)
-
-It's time to head on over to a *Windows* computer to run *XBeach*. This is probably the quickest way to get a model running with precompiled binaries, though it's also possible to compile *XBeach* from source to run on *Linux* machines. Get the [XBeach model](https://www.deltares.nl/en/software-and-data/products/xbeach) itself from *Deltares* and add all of its files to the working directory. Now, the full file list should look like this:
-
-![Full file list](./Screenshots/FilesList2.png)
-
-Run *XBeach* by launching ```xbeach.exe```. If the simulation successfully runs to completion, a file called ```xboutput.nc``` will appear and the log text file will announce the end of the program.
-
-### View results
-
-Bring ```xboutput.nc``` back into QGIS to view the results.
+After running an XBeach model, as described below, bring ```xboutput.nc``` back into QGIS to view the results.
 
 -   Provide the path to ```xboutput.nc```.
 -   Choose a variable to view.
 -   Select a single timestep related to the chosen variable.
 -   Add to the map canvas as a temporary raster layer.
 -   Known ~~bug~~ feature: initial temporary raster layer colors/styles applied will likely not be appropriate for the range of values displayed and will require fine-tuning by hand.
+-   **NEW**: Color scales should perform *sligltly* better. Some cases will still require hand tuning.
 
-![Explore results](./Screenshots/PlotResults.png)
+![Explore results](./Screenshots/inspectOutput.png)
+
+### Launch a model
+
+After using *ModelMaker* to generate a model, the following files should all exist in the same directory:
+
+* params.txt
+* tide.txt
+* jonswap.txt
+* x.grd
+* y.grd
+* bed.dep
+* manning.dep (optional)
+* nonerodible.dep (optional)
+
+It's time to head on over to a *Windows* computer to run *XBeach*. This is probably the quickest way to get a model running with a precompiled build, though it's also possible to compile *XBeach* from source to run on *Linux* machines. Get the [XBeach model](https://www.deltares.nl/en/software-and-data/products/xbeach) itself from *Deltares* and add all of its files to the working directory. Now, the full file list should look like this:
+
+![Full file list](./Screenshots/FilesList2.png)
+
+Run *XBeach* by launching ```xbeach.exe```. If the simulation successfully runs to completion, a file called ```xboutput.nc``` will appear and the log text file will announce the end of the program.
+
+### Full documentation
+
+Find more explicit instructions at [QBeach documentation](https://qbeach.readthedocs.io/en/latest/#).
