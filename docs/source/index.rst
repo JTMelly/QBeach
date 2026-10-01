@@ -36,10 +36,3 @@ QBeach documentation
 
    projectinfo/changelog
    projectinfo/contributing
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
