@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Circular mean of a wave-direction column for XBeach angle windows."""
 import math
 

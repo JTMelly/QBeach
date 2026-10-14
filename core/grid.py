@@ -1,8 +1,12 @@
-# -*- coding: utf-8 -*-
 import numpy as np
-from qgis.core import QgsPointXY, QgsGeometry, QgsWkbTypes
+from qgis.core import QgsGeometry, QgsPointXY, QgsWkbTypes
 from qgis.gui import QgsRubberBand
-from qgis.PyQt.QtGui import QColor
+
+try:
+    from qgis.PyQt.QtGui import QColor  # type: ignore
+except ImportError:
+    from PyQt5.QtGui import QColor
+
 
 def calculate_grid(p):
     """Compute the world-coordinate grid nodes and bounding polygon.
@@ -18,14 +22,16 @@ def calculate_grid(p):
             disty (float): Longshore extent in metres.
             dx (float): Grid spacing in the x-direction.
             dy (float): Grid spacing in the y-direction.
-            angle (float): Rotation angle in degrees, counter-clockwise from East.
+            angle (float): Rotation angle in degrees, counter-clockwise from
+            East.
 
     Returns:
         tuple: (worldROI, E_world, N_world)
             - worldROI (ndarray): 5x2 array of polygon vertices defining the
               grid extent in world coordinates (closed ring).
             - E_world (ndarray): 2D array of Easting values for each grid node.
-            - N_world (ndarray): 2D array of Northing values for each grid node.
+            - N_world (ndarray): 2D array of Northing values for each grid
+              node.
     """
 
     theta = np.radians(p['angle'])
@@ -40,21 +46,28 @@ def calculate_grid(p):
         [0, 0]
     ])
 
-    worldROI = (rotmat @ localROI.T).T + [p['originEasting'], p['originNorthing']]
+    worldROI = (
+        (rotmat @ localROI.T).T
+        + [p['originEasting'], p['originNorthing']]
+    )
 
     nx = int(p['distx'] / p['dx'])
     ny = int(p['disty'] / p['dy'])
     x_grid_1d = np.linspace(0, p['distx'], nx + 1)
     y_grid_1d = np.linspace(0, p['disty'], ny + 1)
-    
+
     localX, localY = np.meshgrid(x_grid_1d, y_grid_1d)
     localCoords = np.vstack([localX.ravel(), localY.ravel()])
-    worldGrid = (rotmat @ localCoords).T + [p['originEasting'], p['originNorthing']]
-    
+    worldGrid = (
+        (rotmat @ localCoords).T
+        + [p['originEasting'], p['originNorthing']]
+    )
+
     E_world = worldGrid[:, 0].reshape(localX.shape)
     N_world = worldGrid[:, 1].reshape(localX.shape)
 
     return worldROI, E_world, N_world
+
 
 class GridVisualizer:
     def __init__(self, iface):
@@ -96,7 +109,7 @@ class GridVisualizer:
         """
         self.clear()
         canvas = self.iface.mapCanvas()
-        
+
         # grid lines
         for i in range(0, E_world.shape[0], skip_y):
             rb = self._create_line_rb(canvas, E_world[i, :], N_world[i, :])
@@ -113,19 +126,31 @@ class GridVisualizer:
             self.grid_rubberbands.append(rb)
 
         # ROI
-        self.roi_rubberband = QgsRubberBand(canvas, QgsWkbTypes.PolygonGeometry)
+        self.roi_rubberband = QgsRubberBand(
+            canvas,
+            QgsWkbTypes.PolygonGeometry
+        )
         self.roi_rubberband.setColor(QColor(255, 0, 0, 100))
         self.roi_rubberband.setWidth(2)
         points = [QgsPointXY(pt[0], pt[1]) for pt in worldROI]
         points.append(QgsPointXY(worldROI[0][0], worldROI[0][1]))
-        self.roi_rubberband.setToGeometry(QgsGeometry.fromPolylineXY(points), None)
+        self.roi_rubberband.setToGeometry(
+            QgsGeometry.fromPolylineXY(points),
+            None
+        )
 
         # origin
-        self.origin_rubberband = QgsRubberBand(canvas, QgsWkbTypes.PointGeometry)
-        self.origin_rubberband.setIcon(QgsRubberBand.ICON_CIRCLE)
+        self.origin_rubberband = QgsRubberBand(
+            canvas, QgsWkbTypes.PointGeometry
+        )
+        self.origin_rubberband.setIcon(
+            QgsRubberBand.ICON_CIRCLE  # type: ignore
+        )
         self.origin_rubberband.setIconSize(10)
         self.origin_rubberband.setColor(QColor(255, 255, 0))
-        self.origin_rubberband.addPoint(QgsPointXY(worldROI[0][0], worldROI[0][1]))
+        self.origin_rubberband.addPoint(
+            QgsPointXY(worldROI[0][0], worldROI[0][1])
+        )
 
     def _create_line_rb(self, canvas, E_line, N_line):
         """Create a single grid-line rubber band from coordinate arrays.

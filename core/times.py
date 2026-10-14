@@ -1,5 +1,6 @@
-# -*- coding: utf-8 -*-
+from bisect import bisect_right
 from datetime import date, datetime, time
+from itertools import pairwise
 
 from qgis.core import QgsFeatureRequest
 
@@ -340,6 +341,147 @@ def layer_wave_rows(layer, date_field, time_field, height_field,
         return None
 
     return _rezero(kept, t0)
+
+
+def series_step(rows, min_step=60):
+    """Estimate the sampling step of an elapsed-time row series.
+
+    Args:
+        rows (list): Rows whose first element is elapsed seconds.
+        min_step (int, optional): Steps below this many seconds are
+            treated as unusable.
+
+    Returns:
+        int or None: Median positive step in whole seconds, or None when
+        fewer than two rows differ in time or the step is below
+        ``min_step``.
+    """
+
+    if len(rows) < 2:
+        return None
+
+    diffs = [b[0] - a[0] for a, b in pairwise(rows) if b[0] > a[0]]
+    if not diffs:
+        return None
+
+    diffs.sort()
+    middle = len(diffs) // 2
+    if len(diffs) % 2:
+        median = diffs[middle]
+    else:
+        median = (diffs[middle - 1] + diffs[middle]) / 2.0
+    step = round(median)
+    if step < min_step:
+        return None
+    return step
+
+
+def align_series(tide_rows, wave_rows, duration, min_step=60):
+    """Snap tide and wave rows onto a shared time grid.
+
+    Both series are resampled onto the finer of their sampling steps so
+    that water levels and sea states change on the same clock. Tide
+    values are linearly interpolated between the original rows; wave sea
+    states are held (step) between changes and consecutive identical
+    states are collapsed. Series already sampling at the same step are
+    returned unchanged.
+
+    Args:
+        tide_rows (list): ``[(elapsed_seconds, left, right), ...]``
+            sorted by elapsed time.
+        wave_rows (list): ``[(elapsed_seconds, Hm0, Tp, mainang), ...]``
+            sorted by elapsed time.
+        duration (int): Model duration in seconds. The grid never
+            extends past it and always includes it.
+        min_step (int, optional): Steps finer than this many seconds are
+            left untouched (avoids exploding sub-minute tables).
+
+    Returns:
+        tuple: ``(tide_rows, wave_rows, info)`` with the (possibly)
+        resampled rows and ``info`` None when no alignment was needed,
+        else a dict of ``tide_step``, ``wave_step`` and ``base`` (the
+        shared grid step in seconds).
+    """
+
+    tide_step = series_step(tide_rows, min_step)
+    wave_step = series_step(wave_rows, min_step)
+    if tide_step is None or wave_step is None or tide_step == wave_step:
+        return tide_rows, wave_rows, None
+
+    base = min(tide_step, wave_step)
+    if duration < base:
+        return tide_rows, wave_rows, None
+
+    grid = list(range(0, int(duration) + 1, base))
+    if grid[-1] != int(duration):
+        grid.append(int(duration))
+
+    resampled_tide = _resample_tide(tide_rows, grid)
+    resampled_wave = _resample_wave(wave_rows, grid)
+    info = {'tide_step': tide_step, 'wave_step': wave_step, 'base': base}
+    return resampled_tide, resampled_wave, info
+
+
+def _resample_tide(rows, grid):
+    """Linearly interpolate elapsed-time rows onto a grid of times.
+
+    Args:
+        rows (list): ``(elapsed, value, ...)`` rows sorted by elapsed.
+        grid (list): Ascending elapsed times to sample at.
+
+    Returns:
+        list: One row per grid time; times outside the rows' span hold
+        the first/last row's values.
+    """
+
+    times = [row[0] for row in rows]
+    out = []
+    for elapsed in grid:
+        if elapsed <= times[0]:
+            out.append((elapsed,) + rows[0][1:])
+            continue
+        if elapsed >= times[-1]:
+            out.append((elapsed,) + rows[-1][1:])
+            continue
+        hi = bisect_right(times, elapsed)
+        lo = hi - 1
+        span = times[hi] - times[lo]
+        fraction = 0.0 if span == 0 else (elapsed - times[lo]) / span
+        values = tuple(
+            rows[lo][index]
+            + (rows[hi][index] - rows[lo][index]) * fraction
+            for index in range(1, len(rows[lo])))
+        out.append((elapsed,) + values)
+    return out
+
+
+def _resample_wave(rows, grid):
+    """Sample sea states onto a grid of times, holding each state.
+
+    The state in force at each grid time is repeated, and consecutive
+    grid rows with identical states are collapsed so only actual
+    changes remain.
+
+    Args:
+        rows (list): ``[(elapsed, Hm0, Tp, mainang), ...]`` sorted by
+            elapsed.
+        grid (list): Ascending elapsed times to sample at.
+
+    Returns:
+        list: ``[(grid_time, Hm0, Tp, mainang), ...]`` starting at the
+        first grid time, with unchanged states collapsed.
+    """
+
+    times = [row[0] for row in rows]
+    out = []
+    for elapsed in grid:
+        index = bisect_right(times, elapsed) - 1
+        index = max(0, index)
+        candidate = (elapsed,) + rows[index][1:]
+        if out and candidate[1:] == out[-1][1:]:
+            continue
+        out.append(candidate)
+    return out
 
 
 def _as_date(value):

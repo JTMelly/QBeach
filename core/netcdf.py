@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*-
 import numpy as np
 
 try:
-    from osgeo import gdal
+    from osgeo import gdal  # type: ignore
     HAS_GDAL = True
 except ImportError:
     HAS_GDAL = False
+
 
 def get_netcdf_info(file_path):
     """Read the variable list and metadata from an XBeach NetCDF file.
@@ -33,11 +33,16 @@ def get_netcdf_info(file_path):
 
     subdatasets = master_ds.GetMetadata('SUBDATASETS')
     master_ds = None
+    if not subdatasets:
+        return [], {}
     variables = []
     var_map = {}
-    
-    coord_names = {'globalx', 'globaly', 'point_x', 'point_y', 'lat', 'lon', 'latitude', 'longitude', 'x', 'y'}
-    
+
+    coord_names = {
+        'globalx', 'globaly', 'point_x', 'point_y', 'lat', 'lon',
+        'latitude', 'longitude', 'x', 'y'
+    }
+
     for key, value in subdatasets.items():
         if '_NAME' in key:
             uri = value
@@ -56,8 +61,9 @@ def get_netcdf_info(file_path):
                     'count': count,
                     'uri': uri
                 }
-                
+
     return sorted(variables), var_map
+
 
 def read_netcdf_variable(file_path, var_name, timestep):
     """Read a single variable at a specific timestep from an XBeach NetCDF.
@@ -87,10 +93,12 @@ def read_netcdf_variable(file_path, var_name, timestep):
     master_ds = gdal.Open(file_path)
     if not master_ds:
         return None, None, None
-        
+
     subdatasets = master_ds.GetMetadata('SUBDATASETS')
-    master_ds = None 
-    
+    master_ds = None
+    if not subdatasets:
+        return None, None, None
+
     def find_subdataset_uri(target_names):
         """Helper to find coordinate URIs dynamically."""
         for key, value in subdatasets.items():
@@ -102,34 +110,33 @@ def read_netcdf_variable(file_path, var_name, timestep):
 
     x_uri = find_subdataset_uri(['globalx', 'lon', 'longitude', 'x'])
     y_uri = find_subdataset_uri(['globaly', 'lat', 'latitude', 'y'])
-
     z_uri = None
+
     for key, value in subdatasets.items():
-        if '_NAME' in key:
-            if value.split(':')[-1].strip("'\"") == var_name:
-                z_uri = value
-                break
-                
+        if '_NAME' in key and value.split(':')[-1].strip("'\"") == var_name:
+            z_uri = value
+            break
+
     if not z_uri:
         z_uri = f'NETCDF:"{file_path}":{var_name}'
 
     ds_z = gdal.Open(z_uri)
     if not ds_z:
         return None, None, None
-        
+
     if timestep + 1 > ds_z.RasterCount:
         ds_z = None
         return None, None, None
-        
+
     band = ds_z.GetRasterBand(timestep + 1)
     Z = band.ReadAsArray()
-    ds_z = None 
-    
+    ds_z = None
+
     E, N = None, None
     if x_uri and y_uri:
         ds_x = gdal.Open(x_uri)
         ds_y = gdal.Open(y_uri)
-        
+
         if ds_x and ds_y:
             E = ds_x.GetRasterBand(1).ReadAsArray()
             N = ds_y.GetRasterBand(1).ReadAsArray()
@@ -144,5 +151,5 @@ def read_netcdf_variable(file_path, var_name, timestep):
     if E is None or N is None:
         rows, cols = Z.shape
         E, N = np.meshgrid(np.arange(cols), np.arange(rows))
-        
+
     return E, N, Z

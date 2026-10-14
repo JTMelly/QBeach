@@ -1,5 +1,7 @@
 # changelog=0.1.0
+
 ## Initial beta release
+
           - QGIS righthand docking pane. 
           - Draws regular grids using rubber bands.
           - Extracts elevation (depth) data from raster layer to grid cells.

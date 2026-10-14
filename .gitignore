@@ -42,6 +42,7 @@ docs/source/_build/
 venv/
 env/
 ENV/
+.env
 
 # Jupyter / IPython checkpoints
 .ipynb_checkpoints/

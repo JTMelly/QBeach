@@ -1,18 +1,25 @@
-# -*- coding: utf-8 -*-
 import os
 import tempfile
+
 import numpy as np
-from qgis.core import (QgsPointXY, QgsGeometry, QgsSpatialIndex, QgsRectangle,
-                       QgsCoordinateTransform, QgsProject,
-                       QgsSingleBandPseudoColorRenderer, QgsRasterShader,
-                       QgsColorRampShader)
-from qgis.PyQt.QtGui import QColor
+from qgis.core import (
+    QgsColorRampShader,
+    QgsCoordinateTransform,
+    QgsPointXY,
+    QgsProject,
+    QgsRasterShader,
+    QgsRectangle,
+    QgsSingleBandPseudoColorRenderer,
+    QgsSpatialIndex,
+)
+from qgis.PyQt.QtGui import QColor  # type: ignore
 
 try:
-    from osgeo import gdal, osr
+    from osgeo import gdal, osr  # type: ignore
     HAS_GDAL = True
 except ImportError:
     HAS_GDAL = False
+
 
 def sample_raster_at_grid(raster_layer, E_world, N_world):
     """Extract raster values at each grid node location.
@@ -33,15 +40,25 @@ def sample_raster_at_grid(raster_layer, E_world, N_world):
     no_data = provider.sourceNoDataValue(1)
     rows, cols = E_world.shape
     Z_world = np.zeros((rows, cols))
-    
+
     for i in range(rows):
         for j in range(cols):
-            val, ok = provider.sample(QgsPointXY(E_world[i, j], N_world[i, j]), 1)
+            val, ok = provider.sample(QgsPointXY(
+                E_world[i, j],
+                N_world[i, j]),
+                1
+            )
             Z_world[i, j] = val if (ok and val != no_data) else 0.0
-            
+
     return Z_world
 
-def sample_vector_at_grid(vector_layer, attribute_name, default_value, E_world, N_world, destination_crs=None):
+
+def sample_vector_at_grid(
+        vector_layer,
+        attribute_name,
+        default_value, E_world,
+        N_world,
+        destination_crs=None):
     """Sample a vector polygon layer at each grid node location.
 
     For each grid point, performs a spatial intersection test against
@@ -62,21 +79,25 @@ def sample_vector_at_grid(vector_layer, attribute_name, default_value, E_world, 
     """
     rows, cols = E_world.shape
     result = np.full((rows, cols), default_value, dtype=np.float32)
-    
+
     # Setup CRS transformation if needed
     source_crs = vector_layer.crs()
     if destination_crs is None:
-        destination_crs = QgsProject.instance().crs()
-    
+        destination_crs = QgsProject.instance().crs()  # type: ignore
+
     transform = None
     if source_crs != destination_crs:
-        transform = QgsCoordinateTransform(source_crs, destination_crs, QgsProject.instance())
+        transform = QgsCoordinateTransform(
+            source_crs,
+            destination_crs,
+            QgsProject.instance()
+        )
 
     # Cache geometries and attributes for speed
     geom_map = {}
     attr_map = {}
     index = QgsSpatialIndex()
-    
+
     for f in vector_layer.getFeatures():
         geom = f.geometry()
         if transform:
@@ -90,7 +111,12 @@ def sample_vector_at_grid(vector_layer, attribute_name, default_value, E_world, 
         for j in range(cols):
             pt = QgsPointXY(E_world[i, j], N_world[i, j])
             # Quick bounding box check using spatial index
-            candidate_ids = index.intersects(QgsRectangle(pt.x(), pt.y(), pt.x(), pt.y()))
+            candidate_ids = index.intersects(QgsRectangle(
+                pt.x(),
+                pt.y(),
+                pt.x(),
+                pt.y())
+            )
             for fid in candidate_ids:
                 if geom_map[fid].contains(pt):
                     val = attr_map[fid]
@@ -101,6 +127,7 @@ def sample_vector_at_grid(vector_layer, attribute_name, default_value, E_world, 
                             pass
                     break
     return result
+
 
 def create_temp_raster(E, N, Z, crs_wkt):
     """Write a temporary GeoTIFF from grid coordinates and depth values.
@@ -120,22 +147,23 @@ def create_temp_raster(E, N, Z, crs_wkt):
 
     Raises:
         ImportError: If GDAL is not available.
+        RuntimeError: If the temporary GeoTIFF cannot be created.
     """
 
     if not HAS_GDAL:
         raise ImportError("GDAL is required for this operation.")
 
-    if E.ndim == 2: # 2D case
+    if E.ndim == 2:  # 2D case
         rows, cols = E.shape
         dx_col = E[0, 1] - E[0, 0] if cols > 1 else 1.0
         dy_col = N[0, 1] - N[0, 0] if cols > 1 else 0.0
         dx_row = E[1, 0] - E[0, 0] if rows > 1 else 0.0
         dy_row = N[1, 0] - N[0, 0] if rows > 1 else -1.0
-        
+
         origin_x = E[0, 0] - 0.5 * dx_col - 0.5 * dx_row
         origin_y = N[0, 0] - 0.5 * dy_col - 0.5 * dy_row
         geotransform = (origin_x, dx_col, dx_row, origin_y, dy_col, dy_row)
-    else: # 1D fallback
+    else:  # 1D fallback
         rows = 1
         cols = len(E)
         dx_col = E[1] - E[0] if cols > 1 else 1.0
@@ -143,7 +171,7 @@ def create_temp_raster(E, N, Z, crs_wkt):
         angle = np.arctan2(dy_col, dx_col) + np.pi/2
         dx_row = np.cos(angle)
         dy_row = np.sin(angle)
-        
+
         origin_x = E[0] - 0.5 * dx_col - 0.5 * dx_row
         origin_y = N[0] - 0.5 * dy_col - 0.5 * dy_row
         geotransform = (origin_x, dx_col, dx_row, origin_y, dy_col, dy_row)
@@ -151,9 +179,12 @@ def create_temp_raster(E, N, Z, crs_wkt):
 
     fd, temp_path = tempfile.mkstemp(suffix=".tif")
     os.close(fd)
-    
+
     driver = gdal.GetDriverByName('GTiff')
     ds = driver.Create(temp_path, cols, rows, 1, gdal.GDT_Float32)
+    if ds is None:
+        raise RuntimeError(
+            f"GDAL could not create a temporary raster at {temp_path}")
     ds.SetGeoTransform(geotransform)
     srs = osr.SpatialReference()
     srs.ImportFromWkt(crs_wkt)
@@ -163,19 +194,15 @@ def create_temp_raster(E, N, Z, crs_wkt):
     band.WriteArray(Z_clean)
     band.SetNoDataValue(-9999.0)
     band.FlushCache()
-    ds = None 
-    
+    ds = None
+
     return temp_path
+
 
 def robust_range(Z, abs_limit=1e10, p_low=2.0, p_high=98.0):
     """Compute color-scale limits robust to XBeach dry-cell fill values.
 
-    XBeach writes dry (land) cells using extreme fill values such as the
-    float32 lower bound (-3.4028235e+38). These destroy naive min/max
-    statistics, collapsing all wet-cell values into a narrow band of the
-    colour ramp. This helper excludes non-finite and magnitude-sentinel
-    values, then limits the range to the given percentiles of the
-    remaining data.
+    Set reasonable color scale ranges excluding extreme fill values.
 
     Args:
         Z (ndarray): 2D array of variable values.
@@ -219,20 +246,40 @@ def apply_viridis_renderer(layer, min_val, max_val):
 
     fcn = QgsColorRampShader()
     fcn.setColorRampType(QgsColorRampShader.Interpolated)
-    
+
     if min_val == max_val:
         max_val += 1.0
-    
+
     lst = [
-        QgsColorRampShader.ColorRampItem(min_val, QColor("#440154"), f"{min_val:.2f}"),
-        QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.25, QColor("#3b528b")),
-        QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.50, QColor("#21918c")),
-        QgsColorRampShader.ColorRampItem(min_val + (max_val-min_val)*0.75, QColor("#5ec962")),
-        QgsColorRampShader.ColorRampItem(max_val, QColor("#fde725"), f"{max_val:.2f}")
+        QgsColorRampShader.ColorRampItem(
+            min_val,
+            QColor("#440154"),
+            f"{min_val:.2f}"
+        ),
+        QgsColorRampShader.ColorRampItem(
+            min_val + (max_val-min_val)*0.25,
+            QColor("#3b528b")
+        ),
+        QgsColorRampShader.ColorRampItem(
+            min_val + (max_val-min_val)*0.50,
+            QColor("#21918c")
+        ),
+        QgsColorRampShader.ColorRampItem(
+            min_val + (max_val-min_val)*0.75,
+            QColor("#5ec962")
+        ),
+        QgsColorRampShader.ColorRampItem(
+            max_val,
+            QColor("#fde725"),
+            f"{max_val:.2f}"
+        )
     ]
     fcn.setColorRampItemList(lst)
-    
+
     shader = QgsRasterShader()
     shader.setRasterShaderFunction(fcn)
-    renderer = QgsSingleBandPseudoColorRenderer(layer.dataProvider(), 1, shader)
+    renderer = QgsSingleBandPseudoColorRenderer(
+        layer.dataProvider(),
+        1,
+        shader)
     layer.setRenderer(renderer)
