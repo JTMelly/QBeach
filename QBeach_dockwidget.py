@@ -388,6 +388,17 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             )
             return
 
+        if not (E.shape == N.shape == Z.shape):
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Shape Mismatch",
+                "The selected files must have the same dimensions "
+                "(rows x columns)."
+            )
+            return
+
+        grid_crs = self.iface.mapCanvas().mapSettings().destinationCrs()
+
         self.iface.messageBar().pushMessage(
             "QBeach",
             "Generating optional files...",
@@ -419,7 +430,8 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         attribute,
                         default_val,
                         E,
-                        N
+                        N,
+                        destination_crs=grid_crs
                     )
                 except LAYER_SAMPLE_ERRORS as exc:
                     QtWidgets.QMessageBox.critical(
@@ -467,7 +479,8 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         attribute,
                         default_val,
                         E,
-                        N
+                        N,
+                        destination_crs=grid_crs
                     )
                 except LAYER_SAMPLE_ERRORS as exc:
                     QtWidgets.QMessageBox.critical(

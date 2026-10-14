@@ -5,6 +5,7 @@ import numpy as np
 from qgis.core import (
     QgsColorRampShader,
     QgsCoordinateTransform,
+    QgsGeometry,
     QgsPointXY,
     QgsProject,
     QgsRasterShader,
@@ -63,7 +64,8 @@ def sample_vector_at_grid(
 
     For each grid point, performs a spatial intersection test against
     cached polygon geometries using a QgsSpatialIndex. Points falling
-    inside a polygon receive that feature's attribute value.
+    inside a polygon or on its boundary receive that feature's
+    attribute value.
 
     Args:
         vector_layer (QgsVectorLayer): Polygon vector layer to sample.
@@ -71,8 +73,11 @@ def sample_vector_at_grid(
         default_value (float): Fallback value for points outside all polygons.
         E_world (ndarray): 2D array of Easting coordinates.
         N_world (ndarray): 2D array of Northing coordinates.
-        destination_crs (QgsCoordinateReferenceSystem, optional): CRS to
-            reproject the vector layer into. Defaults to the project CRS.
+        destination_crs (QgsCoordinateReferenceSystem, optional): CRS the
+            grid coordinates are expressed in; the vector layer is
+            reprojected into it when its own CRS differs. Defaults to
+            the project CRS; callers should pass the canvas CRS since
+            grids are created in it.
 
     Returns:
         ndarray: 2D float32 array of sampled values, same shape as E_world.
@@ -110,6 +115,7 @@ def sample_vector_at_grid(
     for i in range(rows):
         for j in range(cols):
             pt = QgsPointXY(E_world[i, j], N_world[i, j])
+            pt_geom = QgsGeometry.fromPointXY(pt)
             # Quick bounding box check using spatial index
             candidate_ids = index.intersects(QgsRectangle(
                 pt.x(),
@@ -118,7 +124,7 @@ def sample_vector_at_grid(
                 pt.y())
             )
             for fid in candidate_ids:
-                if geom_map[fid].contains(pt):
+                if geom_map[fid].intersects(pt_geom):
                     val = attr_map[fid]
                     if val is not None:
                         try:
