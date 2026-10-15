@@ -15,7 +15,7 @@ DEFAULT_SETTINGS = {
     'Hm0': 1.0,
     'Tp': 6.0,
     'mainAngle': 0.0,
-    'spread': 10,
+    'spread': 100,
     'gammajsp': 3.3,
     'plot_abs_limit': 1e10,
     'plot_p_low': 2.0,
