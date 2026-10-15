@@ -251,7 +251,7 @@ def apply_viridis_renderer(layer, min_val, max_val):
     """
 
     fcn = QgsColorRampShader()
-    fcn.setColorRampType(QgsColorRampShader.Interpolated)
+    fcn.setColorRampType(QgsColorRampShader.Type.Interpolated)  # type: ignore
 
     if min_val == max_val:
         max_val += 1.0

@@ -4,19 +4,16 @@ from io import StringIO
 from qgis.core import Qgis
 from qgis.PyQt.QtCore import Qt  # type: ignore
 
-try:
-    QGIS_INFO = Qgis.MessageLevel.Info
-    QGIS_SUCCESS = Qgis.MessageLevel.Success
-    QGIS_WARNING = Qgis.MessageLevel.Warning
-except AttributeError:
-    QGIS_INFO = Qgis.Info  # type: ignore
-    QGIS_SUCCESS = Qgis.Success  # type: ignore
-    QGIS_WARNING = Qgis.Warning  # type: ignore
+QGIS_INFO = Qgis.MessageLevel.Info
+QGIS_SUCCESS = Qgis.MessageLevel.Success
+QGIS_WARNING = Qgis.MessageLevel.Warning
 
 try:
     RIGHT_DOCK_WIDGET_AREA = Qt.DockWidgetArea.RightDockWidgetArea
 except AttributeError:
-    RIGHT_DOCK_WIDGET_AREA = Qt.RightDockWidgetArea
+    # Qt5 fallback: only the flat form exists there (Qt.RightDockWidgetArea);
+    # the value is 0x2 in both Qt5 and Qt6.
+    RIGHT_DOCK_WIDGET_AREA = 2
 
 
 def load_ui_type(ui_path):

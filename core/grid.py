@@ -1,11 +1,7 @@
 import numpy as np
 from qgis.core import QgsGeometry, QgsPointXY, QgsWkbTypes
 from qgis.gui import QgsRubberBand
-
-try:
-    from qgis.PyQt.QtGui import QColor  # type: ignore
-except ImportError:
-    from PyQt5.QtGui import QColor
+from qgis.PyQt.QtGui import QColor  # type: ignore
 
 
 def calculate_grid(p):
@@ -128,7 +124,7 @@ class GridVisualizer:
         # ROI
         self.roi_rubberband = QgsRubberBand(
             canvas,
-            QgsWkbTypes.PolygonGeometry
+            QgsWkbTypes.GeometryType.PolygonGeometry  # type: ignore
         )
         self.roi_rubberband.setColor(QColor(255, 0, 0, 100))
         self.roi_rubberband.setWidth(2)
@@ -141,10 +137,10 @@ class GridVisualizer:
 
         # origin
         self.origin_rubberband = QgsRubberBand(
-            canvas, QgsWkbTypes.PointGeometry
+            canvas, QgsWkbTypes.GeometryType.PointGeometry  # type: ignore
         )
         self.origin_rubberband.setIcon(
-            QgsRubberBand.ICON_CIRCLE  # type: ignore
+            QgsRubberBand.IconType.ICON_CIRCLE
         )
         self.origin_rubberband.setIconSize(10)
         self.origin_rubberband.setColor(QColor(255, 255, 0))
@@ -163,7 +159,9 @@ class GridVisualizer:
         Returns:
             QgsRubberBand: A line rubber band with default styling.
         """
-        rb = QgsRubberBand(canvas, QgsWkbTypes.LineGeometry)
+        rb = QgsRubberBand(
+            canvas, QgsWkbTypes.GeometryType.LineGeometry  # type: ignore
+        )
         rb.setColor(QColor(0, 0, 0, 80))
         rb.setWidth(1)
         line = [QgsPointXY(E_line[k], N_line[k]) for k in range(len(E_line))]

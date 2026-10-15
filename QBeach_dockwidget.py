@@ -90,19 +90,29 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.txtbBathyBuilder.setOpenExternalLinks(True)
 
         # restrict layer selectors to raster or vector
-        self.mlcbBathySource.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        self.mlcbBathySource.setFilters(
+            QgsMapLayerProxyModel.Filter.RasterLayer
+        )
         self.mlcbBathySource.setLayer(None)
-        self.mlcbManningSource.setFilters(QgsMapLayerProxyModel.VectorLayer)
+        self.mlcbManningSource.setFilters(
+            QgsMapLayerProxyModel.Filter.VectorLayer
+        )
         self.mlcbManningSource.setLayer(None)
         self.mlcbNonErodibleSource.setFilters(
-            QgsMapLayerProxyModel.VectorLayer
+            QgsMapLayerProxyModel.Filter.VectorLayer
         )
         self.mlcbNonErodibleSource.setLayer(None)
-        self.mlcbSedimentSource.setFilters(QgsMapLayerProxyModel.VectorLayer)
+        self.mlcbSedimentSource.setFilters(
+            QgsMapLayerProxyModel.Filter.VectorLayer
+        )
         self.mlcbSedimentSource.setLayer(None)
-        self.mlcbTideTable.setFilters(QgsMapLayerProxyModel.VectorLayer)
+        self.mlcbTideTable.setFilters(
+            QgsMapLayerProxyModel.Filter.VectorLayer
+        )
         self.mlcbTideTable.setLayer(None)
-        self.mlcbWaveTable.setFilters(QgsMapLayerProxyModel.VectorLayer)
+        self.mlcbWaveTable.setFilters(
+            QgsMapLayerProxyModel.Filter.VectorLayer
+        )
         self.mlcbWaveTable.setLayer(None)
 
         # restrict file widgets by file types
@@ -122,13 +132,13 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # restrict directory selectors to directories
         self.fwSetwd.setStorageMode(
-            QgsFileWidget.GetDirectory  # ty: ignore
+            QgsFileWidget.StorageMode.GetDirectory
         )
         self.fwSetwd2.setStorageMode(
-            QgsFileWidget.GetDirectory  # ty: ignore
+            QgsFileWidget.StorageMode.GetDirectory
         )
         self.fwSetwdBB2.setStorageMode(
-            QgsFileWidget.GetDirectory  # ty: ignore
+            QgsFileWidget.StorageMode.GetDirectory
         )
 
         # connect UI actions
