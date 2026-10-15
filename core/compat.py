@@ -2,6 +2,7 @@ import re
 from io import StringIO
 
 from qgis.core import Qgis
+from qgis.PyQt.QtCore import Qt  # type: ignore
 
 try:
     QGIS_INFO = Qgis.MessageLevel.Info
@@ -11,6 +12,11 @@ except AttributeError:
     QGIS_INFO = Qgis.Info  # type: ignore
     QGIS_SUCCESS = Qgis.Success  # type: ignore
     QGIS_WARNING = Qgis.Warning  # type: ignore
+
+try:
+    RIGHT_DOCK_WIDGET_AREA = Qt.DockWidgetArea.RightDockWidgetArea
+except AttributeError:
+    RIGHT_DOCK_WIDGET_AREA = Qt.RightDockWidgetArea
 
 
 def load_ui_type(ui_path):
