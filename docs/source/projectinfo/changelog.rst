@@ -9,6 +9,15 @@ This project began as a loose collection of *Python* scripts used to setup, run,
 
 *QBeach* is an attempt to make these tools more accessible to those likely already working in *QGIS* to produce the necessary inputs for a working *XBeach* model.
 
+Changelog=1.0.0 (First QGIS repository submission)
+--------------------------------------
+
+* Feature: accepts variable tide tables.
+* Feature: accepts variable wave tables.
+* Feature: generate and use manning.dep file.
+* Feature: generate and use nonerodible.dep file.
+* Fix: improved style to keep linters happier.
+
 Changelog=0.1.0 (Initial beta release)
 --------------------------------------
 

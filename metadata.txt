@@ -1,6 +1,6 @@
 [general]
 name=QBeach
-version=0.1.0
+version=1.0.0
 description=Make XBeach models in QGIS
 about=Make XBeach models the pointy-clicky way in a familiar QGIS environment.
 tags=XBeach, wave model, bathymetry, tides, waves
@@ -11,14 +11,13 @@ author=Subalpine Software
 email=jacobtristan.melly@unive.it
 tracker=https://github.com/JTMelly/QBeach/issues
 repository=https://github.com/JTMelly/QBeach
-homepage=https://github.com/JTMelly/QBeach
-changelog=0.1.0:
-          - Initial beta release.
-          - QGIS righthand docking pane.
-          - Draws regular grids using rubber bands.
-          - Extracts elevation (depth) data from raster layer to grid cells.
-          - Creates simple XBeach model x.grd, y.grd, bed.dep, params.txt, jonswap.txt, and tide.txt files.
-          - Plots variable at timestep from xboutput.nc.
+homepage=https://qbeach.readthedocs.io/
+changelog=1.0.0:
+          - Feature: accepts variable tide tables.
+          - Feature: accepts variable wave tables.
+          - Feature: generate and use manning.dep file.
+          - Feature: generate and use nonerodible.dep file.
+          - Fix: improved style to keep linters happier.
 
 hasProcessingProvider=false
 # plugin_dependencies=""
