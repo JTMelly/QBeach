@@ -27,23 +27,23 @@ from qgis.gui import QgsFileWidget
 from qgis.PyQt import QtWidgets  # type: ignore
 from qgis.PyQt.QtCore import QTimer, QVariant, pyqtSignal  # type: ignore
 
-from QBeach.config import DEFAULT_SETTINGS  # ty: ignore
-from QBeach.core.compat import (  # ty: ignore
+from .config import DEFAULT_SETTINGS  # ty: ignore
+from .core.compat import (  # ty: ignore
     QGIS_INFO,
     QGIS_SUCCESS,
     QGIS_WARNING,
     load_ui_type,
 )
-from QBeach.core.export import (  # ty: ignore
+from .core.export import (  # ty: ignore
     export_xbeach_model,
     load_grid_files
 )
-from QBeach.core.grid import GridVisualizer, calculate_grid  # ty: ignore
-from QBeach.core.netcdf import (  # ty: ignore
+from .core.grid import GridVisualizer, calculate_grid  # ty: ignore
+from .core.netcdf import (  # ty: ignore
     get_netcdf_info,
     read_netcdf_variable
 )
-from QBeach.core.raster import (  # ty: ignore
+from .core.raster import (  # ty: ignore
     HAS_GDAL,
     apply_viridis_renderer,
     create_temp_raster,
@@ -51,7 +51,7 @@ from QBeach.core.raster import (  # ty: ignore
     sample_raster_at_grid,
     sample_vector_at_grid,
 )
-from QBeach.core.times import (  # ty: ignore
+from .core.times import (  # ty: ignore
     align_series,
     classify_overlap,
     layer_time_range,
@@ -59,7 +59,7 @@ from QBeach.core.times import (  # ty: ignore
     layer_wave_rows,
     series_step,
 )
-from QBeach.core.waveangle import layer_mean_direction  # ty: ignore
+from .core.waveangle import layer_mean_direction  # ty: ignore
 
 FORM_CLASS, _ = load_ui_type(os.path.join(
     os.path.dirname(__file__), "QBeach_dockwidget_base.ui"))
