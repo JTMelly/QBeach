@@ -35,6 +35,7 @@ resources.qrc
 docs/build/
 docs/source/_build/
 .doctrees/
+*.bat
 
 # Environments & System Info
 
