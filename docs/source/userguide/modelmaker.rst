@@ -14,7 +14,15 @@ Choose basic boundary conditions to drive your simulation here. Basic input para
 Input time-varying tides and/or waves
 -------------------------------------
 
-Tables containing tide and wave information (such as *Excel* or *CSV* files) will become available to *QBeach* once the've been added as layers to the *QGIS* project. Similarly, a vector layer could potentially contain tide or wave data in its attribute table (imagine a point representing a buoy with spectral wave data attached). When importing a new map layer, fields should be mapped to correct data types rather than strings. That is, dates, times, and decimal values should all be flagged as such upon import. In *QBeach*, first choose the layers acting as data source then select the fields containing date, time, tide level, wave height, wave period, or wave direction information. If dates and times are combined in a valid *datetime* field, choose the same field as both date and time source. If only one field contains tide values representing the entire study site, map the same field to both left offshore domain corner and right offshore domain corner.
+.. note::
+
+   Time-varying tide and wave functionality was first implemented based on tide and wave data exported directly from the Italian national marine monitoring network supplied by the Istituto Superiore per la Protezione e la Ricerca Ambientale `(ISPRA) <https://www.mareografico.it/>`_. Exported files tend to have separate *date* and *time* columns, in addition to the observations recorded. *QBeach* should be robust enough to handle other *date/time* formats, provided data types are imported into the *QGIS* project correctly and mapped to their corresponding *ModelMaker* fields. *QBeach* turns dates and times into cumulative seconds in order to make *XBeach* happy.
+
+Tables containing tide and wave information (such as *Excel* or *CSV* files) will become available to *QBeach* once the've been added as layers to the *QGIS* project. Similarly, a vector layer could potentially contain tide or wave data in its attribute table (imagine a point representing a buoy with spectral wave data attached). When importing a new map layer, fields should be mapped to correct data types rather than strings. That is, dates, times, and decimal values should all be flagged as such upon import. In *ModelMaker*, first choose the layers acting as data source then select the fields containing date, time, tide level, wave height, wave period, or wave direction information. If dates and times are combined in a valid *datetime* field, choose the same field as both date and time source. If only one field contains tide values representing the entire study site, map the same field to both left offshore domain corner and right offshore domain corner.
+
+.. note::
+
+   In a perfect world, tide and wave data would cover the same time period, with a similar observation frequency. Unfortunately, this is not always the case, and *QBeach* attempts set up simulations based only on data that overlap in time while syncronizing keyframe cadence. If this is not possible, error messages should say so.
 
 .. image:: ../_static/variableTidesWaves.png
 
@@ -30,12 +38,14 @@ Use optional ``*.dep`` files
 
 If you used *BathyBuilder* to generate optional files, this is where you choose to include them in your model by providing their paths as shown below. 
 
-Note: sediment grain sizes are a work in progress and will hopefully be added as a new feature soon.
-
 .. image:: ../_static/useOptionalDep.png
 
 Generate model files
 --------------------
+
+.. note::
+
+   Question\: \ Why does everybody keep asking me to provide my x.grd, y.grd, and bed.dep files? Answer\: \ These files define your model domain and it's important that all other model files are tailored to fit them exactly. *QBeach* uses them as a template when generating all other model files.
 
 Before writing remaining model files, select the x.grd, y.grd, and bed.dep files you want to use; *QBeach* will create a model specific to this gridded area. Once "Export" is clicked on the *ModelMaker* tab, *QBeach* attempts to write necessary model files at the user-defined directory. Ideally, all of the model files should play nicely together though, as mentioned above, it is possible to crash *XBeach* models in seemingly infinite ways. The official `XBeach documentation <https://xbeach.readthedocs.io/en/latest/>`_ will be the best resource for troubleshooting.
 

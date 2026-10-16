@@ -4,7 +4,15 @@ BathyBuilder
 
 Bathymetry data are usually one of the first components of any *XBeach* model and, chances are, you're already using GIS software to assemble bathymetry and elevation data from different sources. *QBeach BathyBuilder* takes raster elevation data and turns them into the file types that *XBeach* looks for in order to run.
 
+.. note::
+
+   Always work in appropriate UTM coordiantes for your study site!
+
 *XBeach* models take a bed.dep file, an x.grd file, and a y.grd file. These are essentially text files that record elevation values covering your model domain and the instructions for how to locate "model space" in "real world space." For this reason, it's important to **work in UTM coordinates**: it's fairly straighforward to move between two-dimensional coordinate systems based on meters. It's worth mentioning that the origin of an *XBeach* model is always located offshore, and *X* coordinates increase moving onshore, while *Y* coordinates increase to the left facing the shore.
+
+.. note::
+
+   In a two-dimensional *XBeach* model, the origin is always located offshore. *X* increases moving onshore, while *Y* increases to the left facing the shore.
 
 Draw regular grid
 -----------------
@@ -23,8 +31,14 @@ When ready, generate *XBeach* model bathymetry files. Select a map canvas layer 
 Make optional ``*.dep`` files
 -----------------------------
 
+.. note::
+
+   These files are not necessary for a very basic *XBeach* model. If you decide to use them, remember to check "Use optional .dep files" on the *ModelMaker* tab.
+
 For a basic *XBeach* model, these optional files are not needed. Some types of studies might want to include a Manning roughness coefficient layer or an erodible sediments layer. The former describes the rugosity of surfaces, affecting how water flows over them, while the latter sets the depth of sediments in each model grid cell that can mobilize in modeled scenarios. Users can either set default values for the entire model domain, or provide vector polygons with "Manning" and "erodible" attributes. Activate the options, select the vector layers and attribute fields containing valid data, and provide any default values that will apply to cells within the model domain but not covered by the vector layers. Make sure to also provide paths to the x.grd, y.grd, and bed.dep files generated previously. This ensures that optional layers are formatted in exactly the same way as the bed.dep file.
 
-Note: *QBeach* cannot yet make sediment grain size files, though the feature is in development.
+.. note::
+
+    *QBeach* cannot yet make sediment grain size files, though the feature is in development.
 
 .. image:: ../_static/optionalDep.png

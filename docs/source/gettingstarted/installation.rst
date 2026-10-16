@@ -5,7 +5,7 @@ Installation
 Plugins repository
 ------------------
 
-*QBeach* is not yet available through the official *QGIS* plugins repository. Ideally, with some further debugging and documentation it should be submitted for consideration in the near future.
+*QBeach* has been submitted to the official *QGIS* plugins repository and should hopefully become available directly within *QGIS* in the near future.
 
 Install from zip
 ----------------
