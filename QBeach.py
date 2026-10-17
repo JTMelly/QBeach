@@ -153,4 +153,5 @@ class QBeach:
         self.dockwidget.resultsGroupBox.setCollapsed(True)  # type: ignore
         self.dockwidget.cgbVariableTides.setCollapsed(True)  # type: ignore
         self.dockwidget.cgbVariableWaves.setCollapsed(True)  # type: ignore
+        self.dockwidget.cgbVariableWind.setCollapsed(True)  # type: ignore
         self.dockwidget.tabQBeach.setCurrentIndex(0)  # type: ignore

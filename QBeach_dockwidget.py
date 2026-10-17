@@ -114,6 +114,10 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             QgsMapLayerProxyModel.Filter.VectorLayer
         )
         self.mlcbWaveTable.setLayer(None)
+        self.mlcbWindTable.setFilters(
+            QgsMapLayerProxyModel.Filter.VectorLayer
+        )
+        self.mlcbWindTable.setLayer(None)
 
         # restrict file widgets by file types
         self.xgrdQgsFileWidget.setFilter("*.grd")
@@ -176,6 +180,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.cbDirectionColumn.currentIndexChanged.connect(
             self.onWaveColumnsChanged
         )
+        self.mlcbWindTable.layerChanged.connect(self.onWindTableLayerChanged)
         self.cbManningLayer.toggled.connect(self.onManningLayerToggled)
         self.cbManningDefaultOnly.toggled.connect(
             self.onManningDefaultOnlyToggled
@@ -191,6 +196,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             )
         self.cbVariableTides.toggled.connect(self.onVariableTidesToggled)
         self.cbVariableWaves.toggled.connect(self.onVariableWavesToggled)
+        self.cbVariableWind.toggled.connect(self.onVariableWindToggled)
 
         # initialize optional layer enabled states
         self.onManningLayerToggled(self.cbManningLayer.isChecked())
@@ -229,6 +235,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.resultsGroupBox.setCollapsed(True)
         self.cgbVariableTides.setCollapsed(True)
         self.cgbVariableWaves.setCollapsed(True)
+        self.cgbVariableWind.setCollapsed(True)
         self.tabQBeach.setCurrentIndex(0)
 
         # uncheck optional checkboxes
@@ -249,6 +256,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.mlcbSedimentSource.setLayer(None)
         self.mlcbTideTable.setLayer(None)
         self.mlcbWaveTable.setLayer(None)
+        self.mlcbWindTable.setLayer(None)
         self.cbManningHeading.clear()
 
         # clear file widgets
@@ -623,12 +631,16 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.onVariableTidesToggled(self.cbVariableTides.isChecked())
         self.cbVariableWaves.setChecked(False)
         self.onVariableWavesToggled(self.cbVariableWaves.isChecked())
+        self.cbVariableWind.setChecked(False)
+        self.onVariableWindToggled(self.cbVariableWind.isChecked())
         self.dsbTide.setValue(DEFAULT_SETTINGS['tide'])
         self.dsbWaveHeight.setValue(DEFAULT_SETTINGS['Hm0'])
         self.dsbWavePeriod.setValue(DEFAULT_SETTINGS['Tp'])
         self.dsbWaveDirection.setValue(DEFAULT_SETTINGS['mainAngle'])
         self.dsbSpreading.setValue(DEFAULT_SETTINGS['spread'])
         self.dsbGammaJSP.setValue(DEFAULT_SETTINGS['gammajsp'])
+        self.dsbWindSpeed.setValue(DEFAULT_SETTINGS['windspeed'])
+        self.dsbWindDirection.setValue(DEFAULT_SETTINGS['winddir'])
 
         # reset output variable checkboxes
         self.cbCelerity.setChecked(False)
@@ -849,6 +861,37 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 mean_direction = layer_mean_direction(layer, direction_field)
                 if mean_direction is not None:
                     self.dsbWaveDirection.setValue(mean_direction)
+
+    def onVariableWindToggled(self, checked):
+        self.dsbWindSpeed.setEnabled(not checked)
+        self.lbWindSpeedConst.setEnabled(not checked)
+        self.dsbWindDirection.setEnabled(not checked)
+        self.lbWindDirection.setEnabled(not checked)
+        self.cgbVariableWind.setEnabled(checked)
+        if checked:
+            self.cgbVariableWind.setCollapsed(False)
+            self.dsbWindSpeed.setValue(DEFAULT_SETTINGS['windspeed'])
+            self.dsbWindDirection.setValue(DEFAULT_SETTINGS['winddir'])
+        else:
+            self.mlcbWindTable.setLayer(None)
+            self.dsbWindSpeed.setValue(DEFAULT_SETTINGS['windspeed'])
+            self.dsbWindDirection.setValue(DEFAULT_SETTINGS['winddir'])
+            self.cgbVariableWind.setCollapsed(True)
+
+    def onWindTableLayerChanged(self, layer):
+        self.cbWindDate.clear()
+        self.cbWindTime.clear()
+        self.cbSpeedColumn.clear()
+        self.cbWindDirColumn.clear()
+        if layer and layer.isValid():
+            for field in layer.fields():
+                if field.type() == QVariant.Date:
+                    self.cbWindDate.addItem(field.name())
+                if field.type() == QVariant.Time:
+                    self.cbWindTime.addItem(field.name())
+                if field.isNumeric():
+                    self.cbSpeedColumn.addItem(field.name())
+                    self.cbWindDirColumn.addItem(field.name())
 
     def onUseNonErodibleToggled(self, checked):
         self.qfwOptionalNonErodible.setEnabled(checked)
