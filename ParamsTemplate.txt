@@ -60,6 +60,10 @@ thetamin     = {thetamin}
 thetamax     = {thetamax}
 
 
+# Wind ##############################
+{wind}
+
+
 # Output format #####################
 outputformat = netcdf
 
