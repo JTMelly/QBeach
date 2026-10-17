@@ -17,6 +17,8 @@ DEFAULT_SETTINGS = {
     'mainAngle': 0.0,
     'spread': 100,
     'gammajsp': 3.3,
+    'windspeed': 0.0,
+    'winddir': 0.0,
     'plot_abs_limit': 1e10,
     'plot_p_low': 2.0,
     'plot_p_high': 98.0
