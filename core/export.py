@@ -10,11 +10,12 @@ def export_xbeach_model(
     tide_rows=None,
     wave_rows=None,
     min_wave_segment=None,
+    wind_rows=None,
 ):
-    """Write tide.txt, jonswap.txt, and params.txt for an XBeach model.
+    """Write tide.txt, jonswap.txt, wind.txt and params.txt for XBeach.
 
     Reads params template, substitutes placeholder values, writes
-    three files to output directory.
+    the model files to output directory.
 
     Args:
         output_dir (str): Path to the output directory.
@@ -22,8 +23,8 @@ def export_xbeach_model(
         p2 (dict): Model parameters dictionary with keys matching the
             template placeholders (date, duration, tstop, tintg, tide,
             Hm0, Tp, mainAngle, thetamin, thetamax, spread, gammajsp,
-            alfa, nx, ny, nglobalvar, global_vars, nmeanvar, mean_vars,
-            bedfriction, sedimentation).
+            wind, alfa, nx, ny, nglobalvar, global_vars, nmeanvar,
+            mean_vars, bedfriction, sedimentation).
         tide_rows (list, optional): ``[(elapsed_seconds, left, right),
             ...]`` time-varying tide series, where left/right are the
             offshore domain corners facing shore.
@@ -34,10 +35,15 @@ def export_xbeach_model(
             in seconds; shorter segments are folded into the preceding
             one so the sea-state list never ends on a stub. None keeps
             every row.
+        wind_rows (list, optional): ``[(elapsed_seconds, speed,
+            direction), ...]`` time-varying wind series; written to
+            wind.txt. When None, no wind.txt is written (constant wind
+            is inlined in params.txt instead).
 
     Raises:
-        ValueError: If the tide series does not reach ``tstop`` or the
-            jonswap segment durations do not sum to ``tstop``.
+        ValueError: If the tide or wind series does not reach
+            ``tstop`` or the jonswap segment durations do not sum to
+            ``tstop``.
     """
 
     with open(template_path, 'r', encoding='utf-8') as pt:
@@ -45,6 +51,7 @@ def export_xbeach_model(
 
     tideFilePath = os.path.join(output_dir, "tide.txt")
     jonsFilePath = os.path.join(output_dir, "jonswap.txt")
+    windFilePath = os.path.join(output_dir, "wind.txt")
     paramsFilePath = os.path.join(output_dir, "params.txt")
     tstop = float(p2['duration']) + 1
 
@@ -78,8 +85,44 @@ def export_xbeach_model(
                 f"{p2['gammajsp']} {p2['spread']} {p2['duration'] + 1} 1"
             )
 
+    if wind_rows:
+        with open(windFilePath, 'w') as f4:
+            f4.write(_wind_text(wind_rows, tstop))
+
     with open(paramsFilePath, 'w') as f3:
         f3.write(template_content.format(**p2))
+
+
+def _wind_text(wind_rows, tstop):
+    """Format a time-varying wind.txt body.
+
+    Args:
+        wind_rows (list): ``[(elapsed_seconds, speed, direction), ...]``
+            sorted by elapsed time, with the first row at elapsed 0.
+        tstop (float): Final model time; the series must cover it.
+
+    Returns:
+        str: Space-delimited lines in ``elapsed speed direction``
+        column order, with a trailing row holding the last wind state
+        at ``tstop`` when the series ends earlier.
+
+    Raises:
+        ValueError: If the series ends before ``tstop`` after the
+            trailing row is added.
+    """
+
+    lines = [f"{elapsed:.1f} {speed:.3f} {direction:.3f}"
+             for elapsed, speed, direction in wind_rows]
+    last_elapsed = wind_rows[-1][0]
+    if tstop > last_elapsed:
+        _, last_speed, last_direction = wind_rows[-1]
+        lines.append(f"{tstop:.1f} {last_speed:.3f} {last_direction:.3f}")
+        last_elapsed = tstop
+    if last_elapsed < tstop:
+        raise ValueError(
+            f"wind series ends at {last_elapsed:g} s, before "
+            f"tstop = {tstop:g} s")
+    return "\n".join(lines)
 
 
 def _jonswap_text(wave_rows, p2, min_segment=None):

@@ -343,6 +343,93 @@ def layer_wave_rows(layer, date_field, time_field, height_field,
     return _rezero(kept, t0)
 
 
+def layer_wind_rows(layer, date_field, time_field, speed_field,
+                    direction_field, window=None):
+    """Read a wind table layer and return elapsed-time rows for XBeach.
+
+    Args:
+        layer (QgsVectorLayer): The table/vector layer to read from.
+        date_field (str): Name of the date field.
+        time_field (str): Name of the time field.
+        speed_field (str): Name of the wind-speed field (m/s).
+        direction_field (str): Name of the wind-direction field
+            (degrees, wind-from convention).
+        window (tuple, optional): ``(start, end)`` absolute datetimes
+            clipping the series, with the same bracket-and-re-zero
+            semantics as ``layer_tide_rows``. ``None`` reads the full
+            series relative to its own first row.
+
+    Returns:
+        list or None: ``[(elapsed_seconds, speed, direction), ...]``
+        sorted by elapsed time, or None if any field name is invalid
+        or fewer than two rows are usable.
+    """
+
+    fields = layer.fields()
+    date_idx = fields.indexFromName(date_field)
+    time_idx = fields.indexFromName(time_field)
+    speed_idx = fields.indexFromName(speed_field)
+    direction_idx = fields.indexFromName(direction_field)
+    if date_idx < 0 or time_idx < 0 or speed_idx < 0 or direction_idx < 0:
+        return None
+
+    indices = [date_idx, time_idx, speed_idx, direction_idx]
+    request = QgsFeatureRequest().setSubsetOfAttributes(indices)
+
+    rows = []
+    for feature in layer.getFeatures(request):
+        try:
+            dt = datetime.combine(_as_date(feature[date_idx]),
+                                  _as_time(feature[time_idx]))
+            speed = float(feature[speed_idx])
+            direction = float(feature[direction_idx])
+        except (AttributeError, TypeError, ValueError):
+            continue
+        rows.append((dt, speed, direction))
+
+    if len(rows) < 2:
+        return None
+
+    rows.sort(key=lambda row: row[0])
+
+    kept, t0 = _clip_rows(rows, window)
+    if kept is None:
+        return None
+
+    return _rezero(kept, t0)
+
+
+def intersect_ranges(ranges):
+    """Classify how several absolute time ranges overlap.
+
+    N-way generalization of :func:`classify_overlap`: the usable period
+    is the intersection of every input range.
+
+    Args:
+        ranges (list): ``(earliest, latest)`` datetime tuples, at
+            least one. None entries are not supported (filter first).
+
+    Returns:
+        tuple: ``(status, start, end)`` where status is ``'identical'``
+        (every range equal; start/end span the range), ``'partial'``
+        (usable intersection; start/end are the intersection bounds),
+        or ``'none'`` (no usable intersection; start/end are None).
+        Returns ``(None, None, None)`` for an empty list. A touching
+        or zero-width intersection counts as ``'none'``.
+    """
+
+    if not ranges:
+        return None, None, None
+
+    start = max(r[0] for r in ranges)
+    end = min(r[1] for r in ranges)
+    if start >= end:
+        return 'none', None, None
+    if all(r == ranges[0] for r in ranges):
+        return 'identical', start, end
+    return 'partial', start, end
+
+
 def series_step(rows, min_step=60):
     """Estimate the sampling step of an elapsed-time row series.
 
@@ -376,14 +463,17 @@ def series_step(rows, min_step=60):
     return step
 
 
-def align_series(tide_rows, wave_rows, duration, min_step=60):
-    """Snap tide and wave rows onto a shared time grid.
+def align_series(tide_rows, wave_rows, duration, min_step=60,
+                 wind_rows=None):
+    """Snap active tide, wave and wind rows onto a shared time grid.
 
-    Both series are resampled onto the finer of their sampling steps so
-    that water levels and sea states change on the same clock. Tide
-    values are linearly interpolated between the original rows; wave sea
-    states are held (step) between changes and consecutive identical
-    states are collapsed. Series already sampling at the same step are
+    Every active series is resampled onto the finer of their sampling
+    steps so that water levels, sea states and winds change on the
+    same clock. Tide values are linearly interpolated between the
+    original rows, wave sea states are held (step) between changes
+    with consecutive identical states collapsed, and wind is linearly
+    interpolated for speed with shortest-arc circular interpolation
+    for direction. Series already sampling at the same step are
     returned unchanged.
 
     Args:
@@ -395,31 +485,54 @@ def align_series(tide_rows, wave_rows, duration, min_step=60):
             extends past it and always includes it.
         min_step (int, optional): Steps finer than this many seconds are
             left untouched (avoids exploding sub-minute tables).
+        wind_rows (list, optional): ``[(elapsed_seconds, speed,
+            direction), ...]`` sorted by elapsed time. None (the
+            default) keeps the legacy two-series behavior.
 
     Returns:
-        tuple: ``(tide_rows, wave_rows, info)`` with the (possibly)
-        resampled rows and ``info`` None when no alignment was needed,
-        else a dict of ``tide_step``, ``wave_step`` and ``base`` (the
-        shared grid step in seconds).
+        tuple: ``(tide_rows, wave_rows, wind_rows, info)`` with the
+        (possibly) resampled rows — ``wind_rows`` is passed through
+        untouched when it was None — and ``info`` None when no
+        alignment was needed, else a dict of ``tide_step``,
+        ``wave_step`` (and ``wind_step`` when wind is active) plus
+        ``base`` (the shared grid step in seconds).
     """
 
-    tide_step = series_step(tide_rows, min_step)
-    wave_step = series_step(wave_rows, min_step)
-    if tide_step is None or wave_step is None or tide_step == wave_step:
-        return tide_rows, wave_rows, None
+    series = [(rows, kind) for rows, kind in
+              [(tide_rows, 'tide'), (wave_rows, 'wave')] if rows]
+    if wind_rows:
+        series.append((wind_rows, 'wind'))
+    if len(series) < 2:
+        return tide_rows, wave_rows, wind_rows, None
 
-    base = min(tide_step, wave_step)
+    steps = {kind: series_step(rows, min_step) for rows, kind in series}
+    if any(step is None for step in steps.values()) \
+            or len(set(steps.values())) == 1:
+        return tide_rows, wave_rows, wind_rows, None
+
+    base = min(steps.values())
     if duration < base:
-        return tide_rows, wave_rows, None
+        return tide_rows, wave_rows, wind_rows, None
 
     grid = list(range(0, int(duration) + 1, base))
     if grid[-1] != int(duration):
         grid.append(int(duration))
 
-    resampled_tide = _resample_tide(tide_rows, grid)
-    resampled_wave = _resample_wave(wave_rows, grid)
-    info = {'tide_step': tide_step, 'wave_step': wave_step, 'base': base}
-    return resampled_tide, resampled_wave, info
+    resampled = {}
+    for rows, kind in series:
+        if kind == 'tide':
+            resampled[kind] = _resample_tide(rows, grid)
+        elif kind == 'wave':
+            resampled[kind] = _resample_wave(rows, grid)
+        else:
+            resampled[kind] = _resample_wind(rows, grid)
+
+    info = {f'{kind}_step': step for kind, step in steps.items()}
+    info['base'] = base
+    return (resampled.get('tide', tide_rows),
+            resampled.get('wave', wave_rows),
+            resampled.get('wind', wind_rows),
+            info)
 
 
 def _resample_tide(rows, grid):
@@ -481,6 +594,45 @@ def _resample_wave(rows, grid):
         if out and candidate[1:] == out[-1][1:]:
             continue
         out.append(candidate)
+    return out
+
+
+def _resample_wind(rows, grid):
+    """Sample wind onto a grid of times, interpolating each component.
+
+    Speed is linearly interpolated between rows; direction uses
+    shortest-arc circular interpolation so a 350°→10° change passes
+    through 0° rather than 180°. Values outside the rows' span are
+    held at the first/last row.
+
+    Args:
+        rows (list): ``[(elapsed, speed, direction), ...]`` sorted by
+            elapsed.
+        grid (list): Ascending elapsed times to sample at.
+
+    Returns:
+        list: ``[(grid_time, speed, direction), ...]``, one row per
+        grid time, direction normalized to ``[0, 360)``.
+    """
+
+    times = [row[0] for row in rows]
+    out = []
+    for elapsed in grid:
+        if elapsed <= times[0]:
+            out.append((elapsed,) + rows[0][1:])
+            continue
+        if elapsed >= times[-1]:
+            out.append((elapsed,) + rows[-1][1:])
+            continue
+        hi = bisect_right(times, elapsed)
+        lo = hi - 1
+        span = times[hi] - times[lo]
+        fraction = 0.0 if span == 0 else (elapsed - times[lo]) / span
+        speed = rows[lo][1] + (rows[hi][1] - rows[lo][1]) * fraction
+        # shortest-arc direction interpolation
+        delta = (rows[hi][2] - rows[lo][2] + 180.0) % 360.0 - 180.0
+        direction = (rows[lo][2] + delta * fraction) % 360.0
+        out.append((elapsed, speed, direction))
     return out
 
 
