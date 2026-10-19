@@ -16,7 +16,8 @@ Just added variable tides and waves! Now it is possible to load tide and wave ta
 
 *QBeach* v. 1.0.0 "Polenta" has just become available in the official *QGIS* plugins respository, *experimental* category. To install directly within *QGIS*, use:
 
-- *Plugins > Manage and Install Plugins... > Settings > "Show also Experimental Plugins*
+- *Plugins > Manage and Install Plugins... > Settings*
+- Choose "Show also Experimental Plugins"
 - *Plugins > Manage and Install Plugins... > All > QBeach*
 - Choose "Install Experimental Plugin"
 
