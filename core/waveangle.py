@@ -48,3 +48,17 @@ def layer_mean_direction(layer, field):
     mean = math.degrees(math.atan2(y, x)) % 360.0
     # rounding at the seam can yield exactly 360.0; keep within [0, 360)
     return 0.0 if mean >= 360.0 else mean
+
+
+def angle_window(main_angle):
+    """Compute the XBeach theta window around a mean wave direction.
+
+    Args:
+        main_angle (float): Mean wave direction in degrees.
+
+    Returns:
+        tuple: ``(thetamin, thetamax)``, the window edges as
+        ``main_angle ± 90`` normalized to ``[0, 360)``.
+    """
+
+    return (main_angle - 90) % 360, (main_angle + 90) % 360

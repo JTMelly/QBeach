@@ -1,6 +1,9 @@
+import logging
 import os
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 def export_xbeach_model(
@@ -193,3 +196,152 @@ def load_grid_files(path_x, path_y, path_z):
     N = np.loadtxt(path_y)
     Z = np.loadtxt(path_z)
     return E, N, Z
+
+
+def infer_grid_shape(path_x, path_y, path_z=None):
+    """Infer the XBeach grid dimensions from grid/depth files.
+
+    Reads the coordinate grids directly when both load with matching
+    dimensions (2D grid, or 1D profile with ``ny = 0``); otherwise
+    falls back to the first readable file among the given paths.
+
+    Args:
+        path_x (str): Path to x.grd.
+        path_y (str): Path to y.grd.
+        path_z (str, optional): Path to bed.dep, used only by the
+            fallback scan when the coordinate grids are unusable.
+
+    Returns:
+        tuple: ``(nx, ny)`` cell counts, ``(0, 0)`` when no file can
+        be read.
+    """
+
+    nx = 0
+    ny = 0
+
+    if os.path.isfile(path_x) and os.path.isfile(path_y):
+        try:
+            X = np.loadtxt(path_x)
+            Y = np.loadtxt(path_y)
+
+            # standard 2D grid case
+            if X.ndim == 2 and Y.ndim == 2 and X.shape == Y.shape:
+                rows, cols = X.shape
+                return cols - 1, rows - 1
+
+            # 1D profile case (ny = 0)
+            if X.ndim == 1 and Y.ndim == 1 and X.shape == Y.shape:
+                return len(X) - 1, 0
+
+        except (OSError, ValueError, TypeError) as exc:
+            logger.debug("Could not load coordinate grid files: %s", exc)
+
+    for path in (path_x, path_y, path_z):
+        if path and os.path.isfile(path):
+            try:
+                data = np.loadtxt(path)
+                if data.ndim == 2:
+                    rows, cols = data.shape
+                    return cols - 1, rows - 1
+                if data.ndim == 1:
+                    return len(data) - 1, 0
+            except (OSError, ValueError, TypeError) as exc:
+                logger.warning(
+                    "Could not load fallback grid data from %s: %s",
+                    path,
+                    exc
+                )
+
+    return nx, ny
+
+
+def params_block_bedfriction(manning_path):
+    """Format the params.txt bed-friction block for a manning file.
+
+    Args:
+        manning_path (str): Path to the manning .dep file, or empty
+            when bed friction is unused.
+
+    Returns:
+        str: Two padded ``key = value`` lines naming the file, or an
+        empty string when ``manning_path`` is empty or not a .dep file.
+    """
+
+    if manning_path and manning_path.lower().endswith('.dep'):
+        return (
+            f"{'bedfriction':<13}= manning\n"
+            f"{'bedfricfile':<13}= {os.path.basename(manning_path)}"
+        )
+    return ""
+
+
+def params_block_sedimentation(ne_path):
+    """Format the params.txt sedimentation block.
+
+    Args:
+        ne_path (str): Path to the non-erodible .dep file, or empty
+            when a non-erodible layer is unused.
+
+    Returns:
+        str: Padded ``key = value`` lines — the morphology-off
+        defaults when ``ne_path`` is empty or not a .dep file,
+        otherwise the non-erodible layer settings.
+    """
+
+    if ne_path and ne_path.lower().endswith('.dep'):
+        return (
+            f"{'morfac':<13}= 1\n"
+            f"{'struct':<13}= 1\n"
+            f"{'ne_layer':<13}= {os.path.basename(ne_path)}"
+        )
+    return f"{'morphology':<13}= 0\n{'sedtrans':<13}= 0"
+
+
+def params_block_wind(table_checked, speed, direction):
+    """Format the params.txt wind block.
+
+    Args:
+        table_checked (bool): True when a time-varying wind table is
+            active (wind.txt is referenced); False for the constant
+            spinbox values.
+        speed (float): Constant wind speed in m/s.
+        direction (float): Constant wind-from direction in degrees.
+
+    Returns:
+        str: Padded ``key = value`` lines — ``wind = 0`` when no wind
+        applies, ``wind = 1`` with ``windfile`` for the table case, or
+        ``wind = 1`` with ``windv``/``windth`` for a non-zero constant
+        speed.
+    """
+
+    if table_checked:
+        return (
+            f"{'wind':<13}= 1\n"
+            f"{'windfile':<13}= wind.txt"
+        )
+    if speed > 0:
+        return (
+            f"{'wind':<13}= 1\n"
+            f"{'windv':<13}= {speed}\n"
+            f"{'windth':<13}= {direction}"
+        )
+    return f"{'wind':<13}= 0"
+
+
+def collect_var_names(checked_names, extra_text):
+    """Merge checkbox-selected and free-text variable names.
+
+    Args:
+        checked_names (iterable): Names selected via checkboxes.
+        extra_text (str): Comma-separated extra names from a line
+            edit; blanks are ignored.
+
+    Returns:
+        list: Deduplicated names, sorted.
+    """
+
+    names = list(checked_names)
+    if extra_text:
+        names.extend(v.strip() for v in extra_text.split(',')
+                     if v.strip())
+    return sorted(set(names))

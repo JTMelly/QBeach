@@ -399,6 +399,25 @@ def layer_wind_rows(layer, date_field, time_field, speed_field,
     return _rezero(kept, t0)
 
 
+def format_series_lines(ranges):
+    """Format labeled time ranges for the overlap warning dialogs.
+
+    Args:
+        ranges (list): ``(label, (earliest, latest))`` pairs.
+
+    Returns:
+        str: One ``Label: start to end`` line per range, using
+        ``YYYY-MM-DD HH:MM:SS`` timestamps.
+    """
+
+    return "\n".join(
+        f"{label}: "
+        f"{start:%Y-%m-%d %H:%M:%S} to "
+        f"{end:%Y-%m-%d %H:%M:%S}"
+        for label, (start, end) in ranges
+    )
+
+
 def intersect_ranges(ranges):
     """Classify how several absolute time ranges overlap.
 
@@ -428,6 +447,27 @@ def intersect_ranges(ranges):
     if all(r == ranges[0] for r in ranges):
         return 'identical', start, end
     return 'partial', start, end
+
+
+def clipped_labels(ranges, start, end):
+    """Labels of series that extend beyond an overlap window.
+
+    Args:
+        ranges (list): ``(label, (earliest, latest))`` pairs.
+        start (datetime): Overlap window start.
+        end (datetime): Overlap window end.
+
+    Returns:
+        list: Labels whose span starts before ``start`` or ends after
+        ``end``, in input order; empty when every series fits inside
+        the window.
+    """
+
+    return [
+        label
+        for label, (range_start, range_end) in ranges
+        if range_start < start or range_end > end
+    ]
 
 
 def series_step(rows, min_step=60):

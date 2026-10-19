@@ -18,7 +18,6 @@ GNU GPL V 3
 # ruff: noqa: I001
 
 import datetime
-import logging
 import os
 
 import numpy as np
@@ -35,8 +34,13 @@ from .core.compat import (  # ty: ignore
     load_ui_type,
 )
 from .core.export import (  # ty: ignore
+    collect_var_names,
     export_xbeach_model,
-    load_grid_files
+    infer_grid_shape,
+    load_grid_files,
+    params_block_bedfriction,
+    params_block_sedimentation,
+    params_block_wind,
 )
 from .core.grid import GridVisualizer, calculate_grid  # ty: ignore
 from .core.netcdf import (  # ty: ignore
@@ -53,6 +57,8 @@ from .core.raster import (  # ty: ignore
 )
 from .core.times import (  # ty: ignore
     align_series,
+    clipped_labels,
+    format_series_lines,
     intersect_ranges,
     layer_time_range,
     layer_tide_rows,
@@ -60,11 +66,13 @@ from .core.times import (  # ty: ignore
     layer_wind_rows,
     series_step,
 )
-from .core.waveangle import layer_mean_direction  # ty: ignore
+from .core.waveangle import (  # ty: ignore
+    angle_window,
+    layer_mean_direction,
+)
 
 FORM_CLASS, _ = load_ui_type(os.path.join(
     os.path.dirname(__file__), "QBeach_dockwidget_base.ui"))
-logger = logging.getLogger(__name__)
 
 # anticipated exception types
 FILE_IO_ERRORS = (OSError, ValueError, TypeError)
@@ -217,6 +225,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.var_map = {}
         self._durationCommitted = None
         self._last_overlap_sig = None
+        self._suspend_reconcile = False
 
         self.resetGrid()
         self.resetInputParams()
@@ -376,6 +385,63 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 f"Failed to save files: {exc}"
             )
 
+    def _save_dep_from_source(self, name, layer, attribute, default_val,
+                              E, N, Z, output_dir, filename, crs):
+        """Build one optional .dep grid and save it.
+
+        Uses the default value grid when ``attribute`` is empty (the
+        default-only path), otherwise samples the layer's attribute at
+        the template grid nodes.
+
+        Args:
+            name (str): User-facing feature name for error dialogs.
+            layer (QgsVectorLayer): Source vector layer.
+            attribute (str or None): Attribute field name; None uses
+                the default-only path (whole grid = default value),
+                while an empty string on the sampling path is a
+                missing selection (warning + abort, as before).
+            default_val (float): Value filling the whole grid when
+                unused or outside all polygons.
+            E, N, Z (ndarray): Template grids (E/N define the nodes,
+                Z defines shape and dtype).
+            output_dir (str): Destination directory.
+            filename (str): File name to write inside ``output_dir``.
+            crs: Canvas CRS forwarded to the vector sampler.
+
+        Returns:
+            bool: True when the file was written; False (after a
+            user-facing dialog) on any failure.
+        """
+
+        if attribute is None:
+            grid = np.full_like(Z, default_val, dtype=float)
+        else:
+            if not layer or not attribute:
+                QtWidgets.QMessageBox.warning(
+                    self, f"{name} Layer Error",
+                    f"Please select a {name} layer and attribute field.")
+                return False
+            try:
+                grid = sample_vector_at_grid(
+                    layer, attribute, default_val, E, N,
+                    destination_crs=crs)
+            except LAYER_SAMPLE_ERRORS as exc:
+                QtWidgets.QMessageBox.critical(
+                    self, f"{name} Error",
+                    f"Failed to generate {filename}: {exc}")
+                return False
+
+        try:
+            np.savetxt(
+                os.path.join(output_dir, filename), grid, fmt="%.4f")
+        except FILE_IO_ERRORS as exc:
+            QtWidgets.QMessageBox.critical(
+                self, f"{name} Error",
+                f"Failed to save {filename}: {exc}")
+            return False
+
+        return True
+
     def exportOptionalFiles(self):
         output_dir = self.fwSetwdBB2.filePath()
         path_x = self.qgsfwXgridBB.filePath()
@@ -429,99 +495,26 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # Manning
         if self.cbManningLayer.isChecked():
-            default_val = self.dsbDefaultManning.value()
-
-            if self.cbManningDefaultOnly.isChecked():
-                manning_grid = np.full_like(Z, default_val, dtype=float)
-            else:
-                layer = self.mlcbManningSource.currentLayer()
-                attribute = self.cbManningHeading.currentText()
-
-                if not layer or not attribute:
-                    QtWidgets.QMessageBox.warning(
-                        self,
-                        "Manning Layer Error",
-                        "Please select a Manning layer and attribute field."
-                    )
-                    return
-
-                try:
-                    manning_grid = sample_vector_at_grid(
-                        layer,
-                        attribute,
-                        default_val,
-                        E,
-                        N,
-                        destination_crs=grid_crs
-                    )
-                except LAYER_SAMPLE_ERRORS as exc:
-                    QtWidgets.QMessageBox.critical(
-                        self,
-                        "Manning Error",
-                        f"Failed to generate manning.dep: {exc}"
-                    )
-                    return
-
-            try:
-                np.savetxt(
-                    os.path.join(output_dir, "manning.dep"),
-                    manning_grid,
-                    fmt="%.4f"
-                )
-            except FILE_IO_ERRORS as exc:
-                QtWidgets.QMessageBox.critical(
-                    self,
-                    "Manning Error",
-                    f"Failed to save manning.dep: {exc}"
-                )
+            attribute = (None if self.cbManningDefaultOnly.isChecked()
+                         else self.cbManningHeading.currentText())
+            if not self._save_dep_from_source(
+                    "Manning",
+                    self.mlcbManningSource.currentLayer(),
+                    attribute,
+                    self.dsbDefaultManning.value(),
+                    E, N, Z, output_dir, "manning.dep", grid_crs):
                 return
 
         # Non-Erodible
         if self.cbNonErodibleLayer.isChecked():
-            default_val = self.dsbDefaultNE.value()
-
-            if self.cbNeDefaultOnly.isChecked():
-                ne_grid = np.full_like(Z, default_val, dtype=float)
-            else:
-                layer = self.mlcbNonErodibleSource.currentLayer()
-                attribute = self.cbNonErodibleHeading.currentText()
-
-                if not layer or not attribute:
-                    QtWidgets.QMessageBox.warning(
-                        self,
-                        "Non-Erodible Error",
-                        "Please select a NE layer and attribute field."
-                    )
-                    return
-
-                try:
-                    ne_grid = sample_vector_at_grid(
-                        layer,
-                        attribute,
-                        default_val,
-                        E,
-                        N,
-                        destination_crs=grid_crs
-                    )
-                except LAYER_SAMPLE_ERRORS as exc:
-                    QtWidgets.QMessageBox.critical(
-                        self,
-                        "Non-Erodible Error",
-                        f"Failed to generate nonerodible.dep: {exc}"
-                    )
-                    return
-
-            try:
-                np.savetxt(
-                    os.path.join(output_dir, "nonerodible.dep"),
-                    ne_grid,
-                    fmt="%.4f")
-            except FILE_IO_ERRORS as exc:
-                QtWidgets.QMessageBox.critical(
-                    self,
-                    "Non-Erodible Error",
-                    f"Failed to save nonerodible.dep: {exc}"
-                )
+            attribute = (None if self.cbNeDefaultOnly.isChecked()
+                         else self.cbNonErodibleHeading.currentText())
+            if not self._save_dep_from_source(
+                    "Non-Erodible",
+                    self.mlcbNonErodibleSource.currentLayer(),
+                    attribute,
+                    self.dsbDefaultNE.value(),
+                    E, N, Z, output_dir, "nonerodible.dep", grid_crs):
                 return
 
             # (Future: handle Sediment)
@@ -627,6 +620,10 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 # MODEL MAKER ##################################################
 
     def resetInputParams(self):
+        # no overlap warnings/duration writes while tables are being
+        # torn down; a fresh setup afterwards re-warns via a cleared sig
+        self._suspend_reconcile = True
+        self._last_overlap_sig = None
         self.sbModelDuration.setValue(DEFAULT_SETTINGS['duration'])
         self.onModelDurationChanged(self.sbModelDuration.value())
         self.sbTimestep.setValue(DEFAULT_SETTINGS['timestep'])
@@ -667,6 +664,8 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.leOutputVariables.clear()
         self.leOtherMeans.clear()
 
+        self._suspend_reconcile = False
+
     def onModelDurationChanged(self, value):
         self._durationCommitted = value
         self.sbTimestep.setRange(1, max(1, int(value / 2)))
@@ -681,12 +680,29 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def onUseManningToggled(self, checked):
         self.qfwOptionalManning.setEnabled(checked)
 
+    def _apply_duration_ownership(self, others, now_checked):
+        """Sync the duration spinbox to the active time-varying tables.
+
+        While any table is active, duration is table-owned (spinbox
+        disabled). When the last table unchecks, the default duration
+        and timestep return.
+
+        Args:
+            others (tuple): The *other* table checkboxes.
+            now_checked (bool): New state of the slot's own checkbox.
+        """
+
+        any_active = now_checked or any(cb.isChecked() for cb in others)
+        self.sbModelDuration.setEnabled(not any_active)
+        self.lbDuration.setEnabled(not any_active)
+        if not any_active:
+            self.sbModelDuration.setValue(DEFAULT_SETTINGS['duration'])
+            self.onModelDurationChanged(self.sbModelDuration.value())
+            self.sbTimestep.setValue(DEFAULT_SETTINGS['timestep'])
+
     def onVariableTidesToggled(self, checked):
-        self._last_overlap_sig = None
-        either_checked = (checked or self.cbVariableWaves.isChecked()
-                          or self.cbVariableWind.isChecked())
-        self.sbModelDuration.setEnabled(not either_checked)
-        self.lbDuration.setEnabled(not either_checked)
+        self._apply_duration_ownership(
+            (self.cbVariableWaves, self.cbVariableWind), checked)
         self.dsbTide.setEnabled(not checked)
         self.lbTide.setEnabled(not checked)
         self.cgbVariableTides.setEnabled(checked)
@@ -695,15 +711,15 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.dsbTide.setValue(DEFAULT_SETTINGS['tide'])
         else:
             self.mlcbTideTable.setLayer(None)
-            if not (self.cbVariableWaves.isChecked()
-                    or self.cbVariableWind.isChecked()):
-                self.sbModelDuration.setValue(DEFAULT_SETTINGS['duration'])
-                self.onModelDurationChanged(self.sbModelDuration.value())
-                self.sbTimestep.setValue(DEFAULT_SETTINGS['timestep'])
             self.dsbTide.setValue(DEFAULT_SETTINGS['tide'])
             self.cgbVariableTides.setCollapsed(True)
 
     def onTideTableLayerChanged(self, layer):
+        # block the connected column combos while populating so the
+        # reconcile below runs once against the settled state instead
+        # of mid-configuration (transient warnings/duration writes)
+        self.cbDateColumn.blockSignals(True)
+        self.cbTimeColumn.blockSignals(True)
         self.cbDateColumn.clear()
         self.cbTimeColumn.clear()
         self.cbLeftTideColumn.clear()
@@ -717,6 +733,9 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 if field.isNumeric():
                     self.cbLeftTideColumn.addItem(field.name())
                     self.cbRightTideColumn.addItem(field.name())
+        self.cbDateColumn.blockSignals(False)
+        self.cbTimeColumn.blockSignals(False)
+        self.onTideColumnsChanged()
 
     def _active_table_ranges(self):
         """Absolute time ranges of the active time-varying tables.
@@ -757,33 +776,34 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         return ranges
 
-    @staticmethod
-    def _format_series_lines(ranges):
-        """Format labeled ranges as one 'Label: start to end' per line."""
-        return "\n".join(
-            f"{label}: "
-            f"{start:%Y-%m-%d %H:%M:%S} to "
-            f"{end:%Y-%m-%d %H:%M:%S}"
-            for label, (start, end) in ranges
-        )
-
     def _warn_no_overlap(self, ranges):
         QtWidgets.QMessageBox.warning(
             self, "No time overlap",
-            self._format_series_lines(ranges) + "\n\n"
+            format_series_lines(ranges) + "\n\n"
             "The time series do not overlap in time. "
             "Please choose different sources.")
 
     def _warn_partial_overlap(self, ranges, start, end):
+        clipped = clipped_labels(ranges, start, end)
+        if len(clipped) == 1:
+            clip_text = f"{clipped[0]} will be clipped at export."
+        elif clipped:
+            clip_text = (f"{', '.join(clipped[:-1])} and "
+                         f"{clipped[-1]} will be clipped at export.")
+        else:
+            clip_text = ("One or more series will be clipped at "
+                         "export.")
         QtWidgets.QMessageBox.warning(
             self, "Partial time overlap",
-            self._format_series_lines(ranges) + "\n\n"
+            format_series_lines(ranges) + "\n\n"
             "Only the overlapping period will be simulated:\n"
             f"{start:%Y-%m-%d %H:%M:%S} to "
             f"{end:%Y-%m-%d %H:%M:%S}.\n\n"
-            "One or more series will be clipped at export.")
+            f"{clip_text}")
 
     def _reconcile_time_tables(self):
+        if self._suspend_reconcile:
+            return
         ranges = self._active_table_ranges()
         if not ranges:
             return
@@ -832,11 +852,8 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self._reconcile_time_tables()
 
     def onVariableWavesToggled(self, checked):
-        self._last_overlap_sig = None
-        either_checked = (checked or self.cbVariableTides.isChecked()
-                          or self.cbVariableWind.isChecked())
-        self.sbModelDuration.setEnabled(not either_checked)
-        self.lbDuration.setEnabled(not either_checked)
+        self._apply_duration_ownership(
+            (self.cbVariableTides, self.cbVariableWind), checked)
         self.dsbWaveHeight.setEnabled(not checked)
         self.lbWaveHeight.setEnabled(not checked)
         self.dsbWavePeriod.setEnabled(not checked)
@@ -851,17 +868,18 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.dsbWaveDirection.setValue(DEFAULT_SETTINGS['mainAngle'])
         else:
             self.mlcbWaveTable.setLayer(None)
-            if not (self.cbVariableTides.isChecked()
-                    or self.cbVariableWind.isChecked()):
-                self.sbModelDuration.setValue(DEFAULT_SETTINGS['duration'])
-                self.onModelDurationChanged(self.sbModelDuration.value())
-                self.sbTimestep.setValue(DEFAULT_SETTINGS['timestep'])
             self.dsbWaveHeight.setValue(DEFAULT_SETTINGS['Hm0'])
             self.dsbWavePeriod.setValue(DEFAULT_SETTINGS['Tp'])
             self.dsbWaveDirection.setValue(DEFAULT_SETTINGS['mainAngle'])
             self.cgbVariableWaves.setCollapsed(True)
 
     def onWaveTableLayerChanged(self, layer):
+        # block the connected combos while populating; the tail call
+        # reconciles once against the settled state and re-syncs the
+        # mean wave direction that used to ride these signals
+        self.cbWaveDate.blockSignals(True)
+        self.cbWaveTime.blockSignals(True)
+        self.cbDirectionColumn.blockSignals(True)
         self.cbWaveDate.clear()
         self.cbWaveTime.clear()
         self.cbHeightColumn.clear()
@@ -877,6 +895,10 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     self.cbHeightColumn.addItem(field.name())
                     self.cbPeriodColumn.addItem(field.name())
                     self.cbDirectionColumn.addItem(field.name())
+        self.cbWaveDate.blockSignals(False)
+        self.cbWaveTime.blockSignals(False)
+        self.cbDirectionColumn.blockSignals(False)
+        self.onWaveColumnsChanged()
 
     def onWaveColumnsChanged(self, index=0):
         self._reconcile_time_tables()
@@ -890,11 +912,8 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     self.dsbWaveDirection.setValue(mean_direction)
 
     def onVariableWindToggled(self, checked):
-        self._last_overlap_sig = None
-        either_checked = (checked or self.cbVariableTides.isChecked()
-                          or self.cbVariableWaves.isChecked())
-        self.sbModelDuration.setEnabled(not either_checked)
-        self.lbDuration.setEnabled(not either_checked)
+        self._apply_duration_ownership(
+            (self.cbVariableTides, self.cbVariableWaves), checked)
         self.dsbWindSpeed.setEnabled(not checked)
         self.lbWindSpeedConst.setEnabled(not checked)
         self.dsbWindDirection.setEnabled(not checked)
@@ -906,16 +925,15 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.dsbWindDirection.setValue(DEFAULT_SETTINGS['winddir'])
         else:
             self.mlcbWindTable.setLayer(None)
-            if not (self.cbVariableTides.isChecked()
-                    or self.cbVariableWaves.isChecked()):
-                self.sbModelDuration.setValue(DEFAULT_SETTINGS['duration'])
-                self.onModelDurationChanged(self.sbModelDuration.value())
-                self.sbTimestep.setValue(DEFAULT_SETTINGS['timestep'])
             self.dsbWindSpeed.setValue(DEFAULT_SETTINGS['windspeed'])
             self.dsbWindDirection.setValue(DEFAULT_SETTINGS['winddir'])
             self.cgbVariableWind.setCollapsed(True)
 
     def onWindTableLayerChanged(self, layer):
+        # block the connected column combos while populating so the
+        # reconcile below runs once against the settled state
+        self.cbWindDate.blockSignals(True)
+        self.cbWindTime.blockSignals(True)
         self.cbWindDate.clear()
         self.cbWindTime.clear()
         self.cbSpeedColumn.clear()
@@ -929,6 +947,9 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 if field.isNumeric():
                     self.cbSpeedColumn.addItem(field.name())
                     self.cbWindDirColumn.addItem(field.name())
+        self.cbWindDate.blockSignals(False)
+        self.cbWindTime.blockSignals(False)
+        self.onWindColumnsChanged()
 
     def onWindColumnsChanged(self, index=0):
         self._reconcile_time_tables()
@@ -941,60 +962,13 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def getModelParams(self):
 
-        nx = 0
-        ny = 0
-        alfa = 0.0
         path_x = self.xgrdQgsFileWidget2.filePath()
         path_y = self.ygrdQgsFileWidget2.filePath()
         path_z = self.beddepQgsFileWidget2.filePath()
+        nx, ny = infer_grid_shape(path_x, path_y, path_z)
 
-        found_grid = False
-        if os.path.isfile(path_x) and os.path.isfile(path_y):
-            try:
-                X = np.loadtxt(path_x)
-                Y = np.loadtxt(path_y)
-
-                # standard 2D grid case
-                if X.ndim == 2 and Y.ndim == 2 and X.shape == Y.shape:
-                    rows, cols = X.shape
-                    nx = cols - 1
-                    ny = rows - 1
-                    found_grid = True
-
-                # 1D profile case (ny = 0)
-                elif X.ndim == 1 and Y.ndim == 1 and X.shape == Y.shape:
-                    nx = len(X) - 1
-                    ny = 0
-                    found_grid = True
-
-            except FILE_IO_ERRORS as exc:
-                logger.debug("Could not load coordinate grid files: %s", exc)
-
-        if not found_grid:
-            for path in [path_x, path_y, path_z]:
-                if path and os.path.isfile(path):
-                    try:
-                        data = np.loadtxt(path)
-                        if data.ndim == 2:
-                            rows, cols = data.shape
-                            nx = cols - 1
-                            ny = rows - 1
-                            break
-                        elif data.ndim == 1:
-                            nx = len(data) - 1
-                            ny = 0
-                            break
-                    except FILE_IO_ERRORS as exc:
-                        logger.warning(
-                            "Could not load fallback grid data from %s: %s",
-                            path,
-                            exc
-                        )
-
-        # limit angles to [0, 360]
         main_angle = self.dsbWaveDirection.value()
-        thetamin = (main_angle - 90) % 360
-        thetamax = (main_angle + 90) % 360
+        thetamin, thetamax = angle_window(main_angle)
 
         # get global variables (checkboxes + line edit)
         var_map = {
@@ -1006,20 +980,9 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.cbBedLevel: "zb",
             self.cbWaterLevel: "zs"
         }
-
-        selected_vars = [
-            name for cb,
-            name in var_map.items() if cb.isChecked()
-        ]
-
-        other_vars = self.leOutputVariables.text()
-        if other_vars:
-            extra_vars = [
-                v.strip() for v in other_vars.split(',') if v.strip()
-            ]
-            selected_vars.extend(extra_vars)
-
-        selected_vars = sorted(set(selected_vars))
+        selected_vars = collect_var_names(
+            [name for cb, name in var_map.items() if cb.isChecked()],
+            self.leOutputVariables.text())
 
         # get mean variables (checkboxes + line edit)
         mean_var_map = {
@@ -1031,54 +994,21 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.cbMeanV: "v",
             self.cbWaterLevelMean: "zs"
         }
+        selected_means = collect_var_names(
+            [name for cb, name in mean_var_map.items() if cb.isChecked()],
+            self.leOtherMeans.text())
 
-        selected_means = [
-            name for cb, name in mean_var_map.items() if cb.isChecked()
-        ]
-
-        other_means = self.leOtherMeans.text()
-        if other_means:
-            extra_means = [
-                v.strip() for v in other_means.split(',') if v.strip()
-            ]
-            selected_means.extend(extra_means)
-
-        selected_means = sorted(set(selected_means))
-
-        # optional bed friction from manning .dep file
-        bedfriction = ""
-        if self.cbUseManning.isChecked():
-            manning_path = self.qfwOptionalManning.filePath()
-            if manning_path and manning_path.lower().endswith('.dep'):
-                bedfriction = (
-                    f"{'bedfriction':<13}= manning\n"
-                    f"{'bedfricfile':<13}= {os.path.basename(manning_path)}"
-                )
-
-        # optional non-erodible .dep file handling
-        sedimentation = f"{'morphology':<13}= 0\n{'sedtrans':<13}= 0"
-        if self.cbUseNonErodible.isChecked():
-            ne_path = self.qfwOptionalNonErodible.filePath()
-            if ne_path and ne_path.lower().endswith('.dep'):
-                sedimentation = (
-                    f"{'morfac':<13}= 1\n"
-                    f"{'struct':<13}= 1\n"
-                    f"{'ne_layer':<13}= {os.path.basename(ne_path)}"
-                )
-
-        # optional wind: constant spinboxes, or wind.txt from a table
-        wind = f"{'wind':<13}= 0"
-        if self.cbVariableWind.isChecked():
-            wind = (
-                f"{'wind':<13}= 1\n"
-                f"{'windfile':<13}= wind.txt"
-            )
-        elif self.dsbWindSpeed.value() > 0:
-            wind = (
-                f"{'wind':<13}= 1\n"
-                f"{'windv':<13}= {self.dsbWindSpeed.value()}\n"
-                f"{'windth':<13}= {self.dsbWindDirection.value()}"
-            )
+        # optional blocks from the .dep file widgets and the wind table
+        bedfriction = params_block_bedfriction(
+            self.qfwOptionalManning.filePath()
+            if self.cbUseManning.isChecked() else "")
+        sedimentation = params_block_sedimentation(
+            self.qfwOptionalNonErodible.filePath()
+            if self.cbUseNonErodible.isChecked() else "")
+        wind = params_block_wind(
+            self.cbVariableWind.isChecked(),
+            self.dsbWindSpeed.value(),
+            self.dsbWindDirection.value())
 
         return {
             'date': datetime.datetime.now().strftime("%Y-%m-%d"),
@@ -1096,7 +1026,7 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'windspeed': self.dsbWindSpeed.value(),
             'winddir': self.dsbWindDirection.value(),
             'wind': wind,
-            'alfa': alfa,
+            'alfa': 0.0,
             'nx': nx,
             'ny': ny,
             'nglobalvar': len(selected_vars),
@@ -1106,6 +1036,34 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'bedfriction': bedfriction,
             'sedimentation': sedimentation
         }
+
+    def _missing_time_table_fields(self, layer, layer_label, fields):
+        """Validate one time-varying table's layer and column picks.
+
+        Args:
+            layer: Current layer of the table combo (may be None).
+            layer_label (str): User-facing layer name for the missing
+                list and dialog title.
+            fields (list): ``(value, label)`` pairs of required column
+                selections (empty string = missing).
+
+        Returns:
+            list: Missing-setting labels; empty when complete. A
+            warning dialog listing them is shown when non-empty.
+        """
+
+        missing = []
+        if not (layer and layer.isValid()):
+            missing.append(f"{layer_label} table layer")
+        missing.extend(label for value, label in fields if not value)
+
+        if missing:
+            QtWidgets.QMessageBox.warning(
+                self, f"Missing {layer_label} Table Settings",
+                f"The following time-varying {layer_label.lower()} "
+                "settings are incomplete:\n"
+                + "\n".join(f"- {name}" for name in missing))
+        return missing
 
     def exportModel(self):
 
@@ -1163,6 +1121,13 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             return
 
         # time-varying tides: validate selections
+        tide_layer = wind_layer = wave_layer = None
+        date_field = time_field = left_field = right_field = None
+        wind_date_field = wind_time_field = speed_field = None
+        wind_dir_field = None
+        wave_date_field = wave_time_field = None
+        height_field = period_field = direction_field = None
+
         if self.cbVariableTides.isChecked():
             tide_layer = self.mlcbTideTable.currentLayer()
             date_field = self.cbDateColumn.currentText()
@@ -1170,21 +1135,11 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             left_field = self.cbLeftTideColumn.currentText()
             right_field = self.cbRightTideColumn.currentText()
 
-            missing_tide = []
-            if not (tide_layer and tide_layer.isValid()):
-                missing_tide.append("Tide table layer")
-            if not date_field:
-                missing_tide.append("Date column")
-            if not time_field:
-                missing_tide.append("Time column")
-            if not left_field:
-                missing_tide.append("Left tide column")
-            if missing_tide:
-                QtWidgets.QMessageBox.warning(
-                    self, "Missing Tide Table Settings",
-                    "The following time-varying tide settings "
-                    "are incomplete:\n"
-                    + "\n".join(f"- {name}" for name in missing_tide))
+            if self._missing_time_table_fields(
+                    tide_layer, "Tide",
+                    [(date_field, "Date column"),
+                     (time_field, "Time column"),
+                     (left_field, "Left tide column")]):
                 return
 
         # time-varying wind: validate selections
@@ -1195,23 +1150,12 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             speed_field = self.cbSpeedColumn.currentText()
             wind_dir_field = self.cbWindDirColumn.currentText()
 
-            missing_wind = []
-            if not (wind_layer and wind_layer.isValid()):
-                missing_wind.append("Wind table layer")
-            if not wind_date_field:
-                missing_wind.append("Date column")
-            if not wind_time_field:
-                missing_wind.append("Time column")
-            if not speed_field:
-                missing_wind.append("Wind speed column")
-            if not wind_dir_field:
-                missing_wind.append("Wind direction column")
-            if missing_wind:
-                QtWidgets.QMessageBox.warning(
-                    self, "Missing Wind Table Settings",
-                    "The following time-varying wind settings "
-                    "are incomplete:\n"
-                    + "\n".join(f"- {name}" for name in missing_wind))
+            if self._missing_time_table_fields(
+                    wind_layer, "Wind",
+                    [(wind_date_field, "Date column"),
+                     (wind_time_field, "Time column"),
+                     (speed_field, "Wind speed column"),
+                     (wind_dir_field, "Wind direction column")]):
                 return
 
         # time-varying waves: validate selections
@@ -1223,26 +1167,13 @@ class QBeachDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             period_field = self.cbPeriodColumn.currentText()
             direction_field = self.cbDirectionColumn.currentText()
 
-            missing_wave = []
-            if not (wave_layer and wave_layer.isValid()):
-                missing_wave.append("Wave table layer")
-            if not wave_date_field:
-                missing_wave.append("Date column")
-            if not wave_time_field:
-                missing_wave.append("Time column")
-            if not height_field:
-                missing_wave.append("Wave height column")
-            if not period_field:
-                missing_wave.append("Wave period column")
-            if not direction_field:
-                missing_wave.append("Wave direction column")
-            if missing_wave:
-                QtWidgets.QMessageBox.warning(
-                    self, "Missing Wave Table Settings",
-                    "The following time-varying wave settings "
-                    "are incomplete:\n"
-                    + "\n".join(f"- {name}" for name in missing_wave)
-                )
+            if self._missing_time_table_fields(
+                    wave_layer, "Wave",
+                    [(wave_date_field, "Date column"),
+                     (wave_time_field, "Time column"),
+                     (height_field, "Wave height column"),
+                     (period_field, "Wave period column"),
+                     (direction_field, "Wave direction column")]):
                 return
 
         # one overlap check shared by every active table
