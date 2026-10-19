@@ -7,7 +7,8 @@ Plugins repository
 
 *QBeach* v. 1.0.0 "Polenta" has recently become available through the official *QGIS* plugins repository, *experimental* category. To install, launch *QGIS* and use:
 
-* *Plugins > Manage and Install Plugins... > Settings > "Show also Experimental Plugins*
+* *Plugins > Manage and Install Plugins... > Settings*
+* Choose "Show also Experimental Plugins"
 * *Plugins > Manage and Install Plugins... > All > QBeach*
 * Choose "Install Experimental Plugin"
 
