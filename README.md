@@ -21,7 +21,7 @@ Just added variable tides and waves! Now it is possible to load tide and wave ta
 - *Plugins > Manage and Install Plugins... > All > QBeach*
 - Choose "Install Experimental Plugin"
 
- The quickest way to get up and running with the latest development version should be to download the zipped repository (green "code" button, upper right) then use *Plugins > Manage and Install Plugins... > Install from ZIP* in QGIS. Alternatively, clone this repository then point the *QGIS* user profile plugins folder to its location using a symlink. Remember, executing experimental software locally carries inherent risks. Have a look at the code and decide if it's worth trying or better to wait for a release.
+ The quickest way to get up and running with the latest development version should be to download the zipped repository (green "code" button, upper right) then use *Plugins > Manage and Install Plugins... > Install from ZIP* in *QGIS*. Alternatively, clone this repository then point the *QGIS* user profile plugins folder to its location using a symlink. Remember, executing experimental software locally carries inherent risks. Have a look at the code and decide if it's worth trying or better to wait for a release.
 
 This project was inspired by:
 
